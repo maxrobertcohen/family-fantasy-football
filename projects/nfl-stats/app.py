@@ -45,7 +45,8 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("FFL_SECRET", "family-fantasy-dev-secret-change-me")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "league.db")
+# DB path is configurable so a host (Fly) can point it at a persistent volume.
+DB_PATH = os.environ.get("FFL_DB", os.path.join(BASE_DIR, "league.db"))
 
 # ---------------------------------------------------------------------------
 # Configuration – data sources
