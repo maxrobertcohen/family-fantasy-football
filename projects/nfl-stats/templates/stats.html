@@ -437,6 +437,52 @@
       border-color: #991b1b;
     }
 
+    /* ====== Live vs historical badge (baseline; Fable restyles) ====== */
+    .data-mode-badge {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      padding: 12px 16px; border-radius: 12px; margin-bottom: 18px;
+      border: 1px solid var(--border); background: var(--surface);
+    }
+    .data-mode-badge .dm-pill {
+      font-weight: 900; font-size: 13px; letter-spacing: .04em;
+      padding: 5px 12px; border-radius: 999px; white-space: nowrap;
+    }
+    .data-mode-badge .dm-note { font-size: 13px; color: var(--text-lo); }
+    .mode-live      { border-color:#166534; background:rgba(22,101,52,.14); }
+    .mode-live      .dm-pill { background:#16a34a; color:#fff; }
+    .mode-upcoming  { border-color:#92610a; background:rgba(146,97,10,.14); }
+    .mode-upcoming  .dm-pill { background:#f59e0b; color:#1a1200; }
+    .mode-historical{ border-color:#1d4ed8; background:rgba(29,78,216,.12); }
+    .mode-historical .dm-pill{ background:#3b82f6; color:#fff; }
+
+    /* ====== Player search (baseline; Fable restyles) ====== */
+    .player-search-box { margin-bottom: 20px; }
+    .ps-label { display:block; font-size:13px; font-weight:700; color:var(--text-lo); margin-bottom:6px; }
+    #player-search {
+      width:100%; background:var(--surface2); border:1px solid var(--border);
+      color:var(--text-hi); padding:12px 14px; border-radius:12px; font-size:16px; font-family:inherit; outline:none;
+    }
+    #player-search:focus { border-color: var(--accent); }
+    .player-search-results {
+      margin-top:8px; background:var(--surface); border:1px solid var(--border);
+      border-radius:12px; overflow:hidden;
+    }
+    .player-search-results .ps-head {
+      padding:8px 14px; font-size:12px; font-weight:700; color:var(--text-lo);
+      background:var(--surface2); border-bottom:1px solid var(--border);
+    }
+    .player-search-results .ps-row {
+      display:flex; align-items:center; gap:10px; padding:9px 14px; border-bottom:1px solid var(--border);
+    }
+    .player-search-results .ps-row:last-child { border-bottom:none; }
+    .ps-shot { width:34px; height:34px; border-radius:50%; object-fit:cover; background:var(--surface2); flex-shrink:0; }
+    .ps-shot-blank { display:inline-block; }
+    .ps-name { font-weight:700; font-size:15px; }
+    .ps-team { color:var(--text-lo); font-size:13px; }
+    .ps-pts  { margin-left:auto; font-weight:900; color:var(--accent); font-size:15px; white-space:nowrap; }
+    .ps-empty { padding:14px; color:var(--text-lo); font-size:14px; }
+    .pos-badge { font-size:10px; font-weight:800; padding:2px 7px; border-radius:6px; }
+
     /* ====== Footer ====== */
     .app-footer {
       border-top: 1px solid var(--border);
@@ -521,6 +567,16 @@
        Main content
        ======================================================== -->
   <main class="app-main">
+
+    <!-- Live-vs-historical mode badge (populated by script.js) -->
+    <div id="data-mode-badge" class="data-mode-badge" style="display:none"></div>
+
+    <!-- Player lookup — search any player's season totals, no league needed -->
+    <div id="player-search-box" class="player-search-box">
+      <label class="ps-label" for="player-search">🔎 Look up a player</label>
+      <input id="player-search" type="search" placeholder="Search any player or team… (e.g. Josh Allen, Bills)" autocomplete="off" />
+      <div id="player-search-results" class="player-search-results" style="display:none"></div>
+    </div>
 
     <!-- Data note (shown when falling back to prior season data) -->
     <div id="data-note" role="status" aria-live="polite"></div>

@@ -154,6 +154,101 @@ async function fetchStats(season, week) {
   return apiGet(`/api/stats?season=${season}&week=${week}`);
 }
 
+async function fetchDataStatus() {
+  try {
+    return await apiGet('/api/data-status');
+  } catch (e) {
+    console.warn('[nfl-stats] fetchDataStatus:', e.message);
+    return { live_season: 2026, live_week: 1, is_live: false,
+             data_season: 2024, data_week: 18, default_season: 2024, default_week: 18 };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Live vs historical data mode
+// ---------------------------------------------------------------------------
+let DATA_STATUS = null;
+
+function modeFor(season) {
+  const s = DATA_STATUS || {};
+  season = parseInt(season, 10);
+  if (season === s.live_season && s.is_live) {
+    return { mode: 'live', label: '🔴 LIVE NOW',
+             note: `Real ${season} season — scores update as games are played.` };
+  }
+  if (season === s.live_season && !s.is_live) {
+    return { mode: 'upcoming', label: '⏳ NOT STARTED YET',
+             note: `The ${season} season hasn't kicked off — showing last season's real stats until it does.` };
+  }
+  return { mode: 'historical', label: `📚 ${season} FINAL`,
+           note: `Last season's real numbers (${season}, completed) — these are not live scores.` };
+}
+
+function renderModeBadge(season) {
+  const el = qs('#data-mode-badge');
+  if (!el) return;
+  const m = modeFor(season);
+  el.className = `data-mode-badge mode-${m.mode}`;
+  el.innerHTML = `<span class="dm-pill">${m.label}</span><span class="dm-note">${m.note}</span>`;
+  el.style.display = 'flex';
+}
+
+// ---------------------------------------------------------------------------
+// Player search (look up any player's season totals, no league needed)
+// ---------------------------------------------------------------------------
+let SEARCH_POOL = null;
+const TEAM_FULL = {ARI:'cardinals arizona',ATL:'falcons atlanta',BAL:'ravens baltimore',BUF:'bills buffalo',
+  CAR:'panthers carolina',CHI:'bears chicago',CIN:'bengals cincinnati',CLE:'browns cleveland',DAL:'cowboys dallas',
+  DEN:'broncos denver',DET:'lions detroit',GB:'packers green bay',HOU:'texans houston',IND:'colts indianapolis',
+  JAX:'jaguars jacksonville',KC:'chiefs kansas city',LV:'raiders las vegas',LAC:'chargers los angeles',
+  LAR:'rams los angeles',MIA:'dolphins miami',MIN:'vikings minnesota',NE:'patriots new england',NO:'saints new orleans',
+  NYG:'giants new york',NYJ:'jets new york',PHI:'eagles philadelphia',PIT:'steelers pittsburgh',
+  SF:'49ers san francisco niners',SEA:'seahawks seattle',TB:'buccaneers bucs tampa bay',TEN:'titans tennessee',
+  WAS:'commanders washington'};
+
+async function ensureSearchPool() {
+  if (SEARCH_POOL) return SEARCH_POOL;
+  const season = (DATA_STATUS && DATA_STATUS.data_season) || 2024;
+  try {
+    SEARCH_POOL = await apiGet(`/api/pool?season=${season}`);
+  } catch (e) {
+    SEARCH_POOL = [];
+  }
+  return SEARCH_POOL;
+}
+
+async function renderPlayerSearch() {
+  const input = qs('#player-search');
+  const out = qs('#player-search-results');
+  if (!input || !out) return;
+  const q = (input.value || '').trim().toLowerCase();
+  if (!q) { out.innerHTML = ''; out.style.display = 'none'; return; }
+  const pool = await ensureSearchPool();
+  const season = (DATA_STATUS && DATA_STATUS.data_season) || 2024;
+  const matches = pool.filter(p => {
+    const tm = (p.nfl_team || '').toUpperCase();
+    const hay = (p.name + ' ' + tm + ' ' + (p.position || '') + ' ' + (TEAM_FULL[tm] || '')).toLowerCase();
+    return hay.includes(q);
+  }).slice(0, 40);
+  out.style.display = 'block';
+  if (!matches.length) {
+    out.innerHTML = `<div class="ps-empty">No player matches “${input.value}”.</div>`;
+    return;
+  }
+  out.innerHTML = `<div class="ps-head">${matches.length} player${matches.length===1?'':'s'} · ${season} season totals</div>` +
+    matches.map(p => {
+      const badge = posBadgeStyle(p.position);
+      const shot = p.headshot
+        ? `<img class="ps-shot" src="${p.headshot}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`
+        : `<span class="ps-shot ps-shot-blank" aria-hidden="true"></span>`;
+      return `<div class="ps-row">${shot}
+        <span class="ps-name">${p.name}</span>
+        <span class="pos-badge" style="${badge}">${p.position || '?'}</span>
+        <span class="ps-team">${p.nfl_team || ''}</span>
+        <span class="ps-pts">${p.total} pts</span></div>`;
+    }).join('');
+}
+
 // ---------------------------------------------------------------------------
 // Loading / error states
 // ---------------------------------------------------------------------------
@@ -400,18 +495,21 @@ async function init() {
   showLoading('Loading NFL teams…');
 
   try {
-    const [weekData, teams] = await Promise.all([
-      fetchCurrentWeek(),
+    const [status, teams] = await Promise.all([
+      fetchDataStatus(),
       fetchTeams(),
     ]);
 
-    state.currentSeason = weekData.season || 2025;
-    state.currentWeek   = weekData.week   || 18;
+    DATA_STATUS = status;
+    // Default to the newest data that actually EXISTS, not the empty live week.
+    state.currentSeason = status.default_season || 2024;
+    state.currentWeek   = status.default_week   || 18;
     state.teams         = Array.isArray(teams) ? teams : [];
 
     updateWeekLabel();
     buildSeasonSelect(state.currentSeason);
     buildWeekSelect(state.currentWeek);
+    renderModeBadge(state.currentSeason);
 
     // Render grid immediately so the user sees team cards
     renderTeamGrid();
@@ -433,12 +531,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   qs('#season-select')?.addEventListener('change', function () {
     state.currentSeason = parseInt(this.value, 10);
+    renderModeBadge(state.currentSeason);
     reloadStats();
   });
 
   qs('#week-select')?.addEventListener('change', function () {
     state.currentWeek = parseInt(this.value, 10);
     reloadStats();
+  });
+
+  let searchTimer = null;
+  qs('#player-search')?.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(renderPlayerSearch, 120);
   });
 
   document.addEventListener('keydown', e => {

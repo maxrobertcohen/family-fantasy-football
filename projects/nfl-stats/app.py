@@ -69,6 +69,12 @@ ESPN_SCOREBOARD_URL = (
 CACHE_TTL = 6 * 3600  # 6 hours
 ROSTER_LIMIT = 8      # players each team may draft
 
+# Latest season/week that has real, completed stats in the data source.
+# Everything at or before this is HISTORICAL; a later live season is LIVE only
+# once its games have actually been played and show up in the data feed.
+DATA_SEASON = 2024
+DATA_WEEK = 18
+
 _cache: dict = {}
 
 
@@ -275,6 +281,81 @@ def season_player_pool(season: int):
     return pool
 
 
+# ---------------------------------------------------------------------------
+# Live-vs-historical data status
+# ---------------------------------------------------------------------------
+
+def live_week_info():
+    """What ESPN thinks the current live NFL week is (may have no stats yet)."""
+    cached = _cache_get("live_week")
+    if cached is not None:
+        return cached
+    info = {"season": DATA_SEASON, "week": DATA_WEEK, "seasonType": 2}
+    try:
+        resp = requests.get(ESPN_SCOREBOARD_URL, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        info = {
+            "season": int(data.get("season", {}).get("year", DATA_SEASON)),
+            "week": int(data.get("week", {}).get("number", 1)),
+            "seasonType": int(data.get("season", {}).get("type", 2)),
+        }
+    except Exception as exc:
+        print(f"[ffl] live_week_info: {exc}")
+    _cache_set("live_week", info)
+    return info
+
+
+def data_status():
+    """Where 'live' currently is vs the newest data we actually have.
+
+    is_live = True only when the current NFL season already has real, playable
+    stats in the feed. Until the new season kicks off, the app runs on the last
+    completed season's data (HISTORICAL), which we surface loudly in the UI.
+    """
+    cached = _cache_get("data_status")
+    if cached is not None:
+        return cached
+    live = live_week_info()
+    live_season = int(live.get("season", DATA_SEASON))
+    live_week = int(live.get("week", 1))
+    is_live = False
+    if live_season > DATA_SEASON:
+        off_df = fetch_dataframe(OFFENSE_CSV_URL, "off_df")
+        is_live = not filter_week(off_df, live_season, live_week).empty
+    elif live_season == DATA_SEASON:
+        is_live = True
+    if is_live:
+        default_season, default_week = live_season, live_week
+    else:
+        default_season, default_week = DATA_SEASON, DATA_WEEK
+    status = {
+        "live_season": live_season,
+        "live_week": live_week,
+        "is_live": is_live,
+        "data_season": DATA_SEASON,
+        "data_week": DATA_WEEK,
+        "default_season": default_season,
+        "default_week": default_week,
+    }
+    _cache_set("data_status", status)
+    return status
+
+
+def season_descriptor(season, status=None):
+    """Human label describing whether a season shows LIVE or HISTORICAL data."""
+    st = status or data_status()
+    season = int(season)
+    if season == st["live_season"] and st["is_live"]:
+        return {"mode": "live", "label": "🔴 LIVE NOW",
+                "note": f"Real {season} season — scores update as games are played."}
+    if season == st["live_season"] and not st["is_live"]:
+        return {"mode": "upcoming", "label": "⏳ NOT STARTED YET",
+                "note": f"The {season} season hasn't kicked off. Showing last season's real stats until it does."}
+    return {"mode": "historical", "label": f"📚 {season} FINAL",
+            "note": f"These are last season's real numbers ({season}, completed) — not live scores."}
+
+
 def player_scores(season: int):
     """Map player_id -> season total fantasy points (for standings)."""
     return {p["player_id"]: p["total"] for p in season_player_pool(season)}
@@ -469,7 +550,7 @@ def league_view(code):
     ).fetchone()
     if not membership:
         return redirect(url_for("join", code=code))
-    season = int(request.args.get("season", 2024))
+    season = int(request.args.get("season", DATA_SEASON))
     standings = compute_standings(league["id"], season)
     my = next((s for s in standings if s["user_id"] == user["id"]), None)
     join_url = url_for("join", code=code, _external=True)
@@ -481,6 +562,7 @@ def league_view(code):
         my=my,
         join_url=join_url,
         season=season,
+        data_mode=season_descriptor(season),
         roster_limit=ROSTER_LIMIT,
     )
 
@@ -500,7 +582,7 @@ def draft(code):
     ).fetchone()
     if not membership:
         return redirect(url_for("join", code=code))
-    season = int(request.args.get("season", 2024))
+    season = int(request.args.get("season", DATA_SEASON))
     my_roster = db.execute(
         "SELECT * FROM roster WHERE membership_id=? ORDER BY created", (membership["id"],)
     ).fetchall()
@@ -510,6 +592,7 @@ def draft(code):
         league=league,
         membership=membership,
         season=season,
+        data_mode=season_descriptor(season),
         my_roster=my_roster,
         roster_limit=ROSTER_LIMIT,
     )
@@ -614,6 +697,11 @@ def api_drop():
 @app.route("/stats")
 def stats_page():
     return render_template("stats.html", user=current_user())
+
+
+@app.route("/api/data-status")
+def api_data_status():
+    return jsonify(data_status())
 
 
 @app.route("/api/teams")

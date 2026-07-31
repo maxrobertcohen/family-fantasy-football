@@ -10,6 +10,13 @@
     <a class="btn ghost" href="/league/{{ league['code'] }}?season={{ season }}">← Standings</a>
   </div>
 
+  {% if data_mode %}
+  <div class="data-mode-badge mode-{{ data_mode['mode'] }}">
+    <span class="dm-pill">{{ data_mode['label'] }}</span>
+    <span class="dm-note">{{ data_mode['note'] }}</span>
+  </div>
+  {% endif %}
+
   <div class="card">
     <div class="row" style="justify-content:space-between">
       <h2 style="margin:0">My roster (<span id="rostercount">{{ my_roster|length }}</span>/{{ roster_limit }})</h2>

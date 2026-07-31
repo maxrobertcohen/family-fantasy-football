@@ -9,6 +9,13 @@
     <a class="btn" href="/league/{{ league['code'] }}/draft?season={{ season }}">Draft players</a>
   </div>
 
+  {% if data_mode %}
+  <div class="data-mode-badge mode-{{ data_mode['mode'] }}">
+    <span class="dm-pill">{{ data_mode['label'] }}</span>
+    <span class="dm-note">{{ data_mode['note'] }}</span>
+  </div>
+  {% endif %}
+
   <div class="card">
     <h2 style="margin-top:0">Invite your family &amp; friends</h2>
     <p class="muted">Share this link — anyone who opens it can make a team in this league.</p>
