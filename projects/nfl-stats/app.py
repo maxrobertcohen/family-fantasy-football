@@ -999,7 +999,21 @@ def api_stats():
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
+def warm_caches():
+    """Preload season data at startup so no user request ever triggers a slow
+    CSV download (which otherwise caused intermittent 502s per gunicorn worker)."""
+    try:
+        fetch_dataframe(OFFENSE_CSV_URL, "off_df")
+        fetch_dataframe(DEFENSE_CSV_URL, "def_df")
+        season_player_pool(DATA_SEASON)
+        data_status()
+        print("[ffl] warm_caches: season data preloaded")
+    except Exception as exc:
+        print(f"[ffl] warm_caches: {exc}")
+
+
 init_db()
+warm_caches()
 
 if __name__ == "__main__":
     app.run(debug=True, port=5050)
