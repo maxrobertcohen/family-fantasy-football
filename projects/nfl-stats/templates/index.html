@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="NFL player statistics dashboard — top 10 players per team, offense and defense." />
+  <title>NFL Stats</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <style>
+    /* ============================================================
+       Core layout — colour palette, header, grid, cards, overlay
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0a0e1a;
+      --surface:    #111520;
+      --surface2:   #181f30;
+      --border:     #1e2840;
+      --text-hi:    #e8eaf6;
+      --text-lo:    #8b9ab8;
+      --accent:     #3b82f6;
+      --radius-card: 12px;
+      --radius-panel: 16px;
+      --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text-hi);
+      font-family: var(--font);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ====== Header ====== */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10, 14, 26, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 62px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .app-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      line-height: 1;
+      box-shadow: 0 2px 12px rgba(59,130,246,0.35);
+    }
+
+    .app-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+      color: #fff;
+    }
+
+    #week-label {
+      flex: 1;
+      text-align: center;
+      font-size: 14px;
+      color: var(--text-lo);
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .ctrl-label {
+      font-size: 12px;
+      color: var(--text-lo);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .ctrl-select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-hi);
+      padding: 6px 10px 6px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%238b9ab8' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 28px;
+      transition: border-color 0.15s;
+    }
+
+    .ctrl-select:hover,
+    .ctrl-select:focus {
+      border-color: var(--accent);
+    }
+
+    /* ====== Main ====== */
+    .app-main {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 28px 24px 48px;
+    }
+
+    /* ====== Loading state ====== */
+    #loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 360px;
+      gap: 18px;
+    }
+
+    .spinner {
+      width: 42px;
+      height: 42px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.85s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-text {
+      color: var(--text-lo);
+      font-size: 14px;
+    }
+
+    /* ====== Error state ====== */
+    #error-state {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 360px;
+      gap: 16px;
+    }
+
+    .error-icon {
+      font-size: 44px;
+      line-height: 1;
+    }
+
+    .error-text {
+      color: var(--text-lo);
+      font-size: 15px;
+      text-align: center;
+      max-width: 380px;
+      line-height: 1.6;
+    }
+
+    .error-retry {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-hi);
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .error-retry:hover {
+      border-color: var(--accent);
+      background: #1a2540;
+    }
+
+    /* ====== Team grid ====== */
+    #team-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    /* ====== Team card ====== */
+    .team-card {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+      outline: none;
+    }
+
+    .team-card:focus-visible {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(59,130,246,0.4);
+    }
+
+    .team-card:hover {
+      transform: translateY(-4px) scale(1.01);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+      border-color: var(--team-color, var(--accent));
+    }
+
+    .team-card-accent {
+      height: 3px;
+      width: 100%;
+    }
+
+    .team-card-inner {
+      padding: 18px 14px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 138px;
+    }
+
+    .team-logo {
+      width: 62px;
+      height: 62px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 10px rgba(0,0,0,0.45));
+      transition: transform 0.18s ease;
+    }
+
+    .team-card:hover .team-logo {
+      transform: scale(1.07);
+    }
+
+    .team-logo-fallback {
+      width: 62px;
+      height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--text-lo);
+      background: var(--surface2);
+      border-radius: 10px;
+    }
+
+    .team-card-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-hi);
+      text-align: center;
+      line-height: 1.25;
+      letter-spacing: 0.01em;
+    }
+
+    .team-card-abbr {
+      font-size: 10px;
+      color: var(--text-lo);
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .team-card-no-data {
+      position: absolute;
+      bottom: 5px;
+      right: 8px;
+      font-size: 9px;
+      font-weight: 700;
+      color: #2d3a5a;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    /* ====== Detail overlay ====== */
+    #detail-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      background: rgba(5, 8, 18, 0.75);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    #detail-overlay.active {
+      display: flex;
+    }
+
+    #detail-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-panel);
+      width: 100%;
+      max-width: 840px;
+      max-height: 88vh;
+      overflow-y: auto;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.04);
+    }
+
+    .detail-header {
+      padding: 20px 24px 18px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--surface);
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .detail-team-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .detail-logo {
+      width: 54px;
+      height: 54px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+    }
+
+    .detail-logo-fallback {
+      width: 54px;
+      height: 54px;
+      background: var(--surface2);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--text-lo);
+    }
+
+    .detail-team-name {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-hi);
+      letter-spacing: -0.3px;
+    }
+
+    .detail-week-label {
+      font-size: 12px;
+      color: var(--text-lo);
+      margin-top: 3px;
+      font-weight: 500;
+    }
+
+    .detail-close {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-lo);
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      font-family: inherit;
+    }
+
+    .detail-close:hover {
+      background: #252f48;
+      color: var(--text-hi);
+      border-color: #3d4a6e;
+    }
+
+    .detail-body {
+      padding: 22px 24px 28px;
+    }
+
+    .detail-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 36px;
+    }
+
+    .detail-col-header {
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding-bottom: 10px;
+      margin-bottom: 4px;
+      border-bottom: 2px solid;
+    }
+
+    .offense-header {
+      color: #60a5fa;
+      border-color: #1d4ed8;
+    }
+
+    .defense-header {
+      color: #f87171;
+      border-color: #991b1b;
+    }
+
+    /* ====== Footer ====== */
+    .app-footer {
+      border-top: 1px solid var(--border);
+      padding: 28px 24px;
+      text-align: center;
+      font-size: 12px;
+      color: #3d4a6e;
+      line-height: 1.8;
+    }
+
+    .app-footer a {
+      color: #5b6fa8;
+      text-decoration: none;
+    }
+
+    .app-footer a:hover {
+      color: var(--accent);
+    }
+
+    /* ====== Responsive ====== */
+    @media (max-width: 1200px) {
+      #team-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    @media (max-width: 900px) {
+      #team-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 680px) {
+      #team-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .app-main  { padding: 18px 14px 40px; }
+      .detail-columns { grid-template-columns: 1fr; gap: 24px; }
+      #detail-panel { max-height: 94vh; border-radius: 12px; }
+      .detail-body  { padding: 16px 16px 24px; }
+      .detail-header { padding: 16px; }
+      #week-label { display: none; }
+    }
+
+    @media (max-width: 420px) {
+      .header-inner { padding: 0 14px; gap: 10px; }
+      .app-title    { font-size: 16px; }
+      .ctrl-select  { font-size: 12px; padding: 5px 22px 5px 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================================
+       Header
+       ======================================================== -->
+  <header class="app-header">
+    <div class="header-inner">
+      <a class="app-logo" href="/" aria-label="NFL Stats home">
+        <div class="logo-icon" aria-hidden="true">🏈</div>
+        <span class="app-title">NFL Stats</span>
+      </a>
+
+      <div id="week-label" aria-live="polite">2025 · Week 18</div>
+
+      <div class="header-controls">
+        <label class="ctrl-label" for="season-select">Season</label>
+        <select id="season-select" class="ctrl-select" aria-label="Season">
+          <option value="2023">2023</option>
+          <option value="2024">2024</option>
+          <option value="2025" selected>2025</option>
+          <option value="2026">2026</option>
+        </select>
+
+        <label class="ctrl-label" for="week-select">Week</label>
+        <select id="week-select" class="ctrl-select" aria-label="Week">
+          <!-- Populated by script.js -->
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================
+       Main content
+       ======================================================== -->
+  <main class="app-main">
+
+    <!-- Data note (shown when falling back to prior season data) -->
+    <div id="data-note" role="status" aria-live="polite"></div>
+
+    <!-- Loading spinner -->
+    <div id="loading-state" aria-live="polite" aria-busy="true">
+      <div class="spinner" aria-hidden="true"></div>
+      <div class="loading-text">Loading NFL teams…</div>
+    </div>
+
+    <!-- Error state -->
+    <div id="error-state">
+      <div class="error-icon" aria-hidden="true">⚠️</div>
+      <div class="error-text">Stats unavailable for this week</div>
+      <button class="error-retry" onclick="window.location.reload()">Try Again</button>
+    </div>
+
+    <!-- 32-team grid -->
+    <div id="team-grid" style="display:none" role="list" aria-label="NFL teams"></div>
+
+  </main>
+
+  <!-- ========================================================
+       Team detail overlay
+       ======================================================== -->
+  <div id="detail-overlay" role="dialog" aria-modal="true" aria-label="Team player stats">
+    <div id="detail-panel">
+      <!-- Populated dynamically by script.js -->
+    </div>
+  </div>
+
+  <!-- ========================================================
+       Footer
+       ======================================================== -->
+  <footer class="app-footer">
+    <div>2026 season begins September 2026 &middot; Stats update weekly</div>
+    <div>
+      Data from
+      <a href="https://nflverse.com" target="_blank" rel="noopener">nflverse</a>
+      &amp;
+      <a href="https://www.espn.com/nfl/" target="_blank" rel="noopener">ESPN</a>
+    </div>
+  </footer>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>
