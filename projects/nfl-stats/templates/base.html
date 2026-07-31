@@ -6,22 +6,25 @@
   <title>{% block title %}Family Fantasy Football{% endblock %}</title>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    /* Buffalo Bills theme — royal blue #00338D, red #C60C30 */
     :root{
-      --bg:#0a0e1a; --surface:#111520; --surface2:#181f30; --border:#1e2840;
-      --text-hi:#e8eaf6; --text-lo:#8b9ab8; --accent:#3b82f6; --accent2:#22c55e;
-      --gold:#f5c451; --red:#ef4444;
+      --bg:#06122b; --surface:#0d1f3f; --surface2:#15294d; --border:#1f3d6b;
+      --text-hi:#eef3ff; --text-lo:#9db0d4; --accent:#1e5bd6; --bills-blue:#00338D;
+      --accent2:#C60C30; --gold:#f5c451; --red:#C60C30;
       --radius:14px; --font:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
     }
     html,body{min-height:100%;background:var(--bg);color:var(--text-hi);font-family:var(--font)}
     a{color:var(--accent);text-decoration:none}
     a:hover{text-decoration:underline}
-    .nav{display:flex;align-items:center;gap:18px;padding:14px 22px;background:var(--surface);
-         border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
-    .nav .brand{font-weight:800;font-size:18px;color:var(--text-hi);letter-spacing:.3px}
-    .nav .brand span{color:var(--gold)}
+    .nav{display:flex;align-items:center;gap:18px;padding:14px 22px;background:var(--bills-blue);
+         border-bottom:3px solid var(--red);position:sticky;top:0;z-index:10}
+    .nav .brand{font-weight:800;font-size:18px;color:#fff;letter-spacing:.3px}
+    .nav .brand span{color:var(--red)}
+    .nav a.link{color:#cddafc}
+    .nav a.link:hover{color:#fff}
     .nav .spacer{flex:1}
-    .nav a.link{color:var(--text-lo);font-weight:600;font-size:14px}
-    .nav a.link:hover{color:var(--text-hi);text-decoration:none}
+    .nav a.link{color:#cddafc;font-weight:600;font-size:14px}
+    .nav a.link:hover{color:#fff;text-decoration:none}
     .wrap{max-width:960px;margin:0 auto;padding:28px 20px 60px}
     h1{font-size:28px;margin-bottom:6px}
     h2{font-size:20px;margin:26px 0 12px}
