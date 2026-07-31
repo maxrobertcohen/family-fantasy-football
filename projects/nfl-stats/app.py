@@ -874,6 +874,11 @@ def stats_page():
     return render_template("stats.html", user=current_user())
 
 
+@app.route("/esme")
+def esme_page():
+    return render_template("esme.html", user=current_user())
+
+
 @app.route("/leaderboard")
 def leaderboard_page():
     status = data_status()

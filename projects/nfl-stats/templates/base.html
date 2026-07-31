@@ -48,6 +48,9 @@
     .nav .spacer{flex:1}
     .nav a.link{color:#fff;font-weight:800;font-size:16px;padding:6px 10px;border-radius:10px}
     .nav a.link:hover{background:rgba(255,255,255,.14);text-decoration:none}
+    .nav a.esme-tab{background:linear-gradient(90deg,#ff6ec4,#7873f5);color:#fff;
+      box-shadow:0 2px 8px rgba(255,110,196,.5)}
+    .nav a.esme-tab:hover{background:linear-gradient(90deg,#ff8fd0,#948ff7);filter:brightness(1.05)}
 
     .wrap{max-width:980px;margin:0 auto;padding:30px 20px 70px}
     h1{font-size:34px;font-weight:900;letter-spacing:-.3px;margin-bottom:6px;color:var(--text-hi)}
@@ -138,10 +141,12 @@
       <a class="link" href="/dashboard">My Leagues</a>
       <a class="link" href="/leaderboard">🏆 Leaderboard</a>
       <a class="link" href="/stats">NFL Stats</a>
+      <a class="link esme-tab" href="/esme">🦄 Esme's Page</a>
       <a class="link" href="/logout">Log out ({{ user['username'] }})</a>
     {% else %}
       <a class="link" href="/leaderboard">🏆 Leaderboard</a>
       <a class="link" href="/stats">NFL Stats</a>
+      <a class="link esme-tab" href="/esme">🦄 Esme's Page</a>
       <a class="link" href="/login">Log in</a>
       <a class="btn small green" href="/register">Sign up</a>
     {% endif %}
