@@ -20,36 +20,37 @@ const state = {
 // ---------------------------------------------------------------------------
 // Position → badge colours
 // ---------------------------------------------------------------------------
+// Light theme: soft tinted chip, colored border, dark readable text (WCAG AA).
 const POS_STYLES = {
   // Offense
-  QB:  { bg: '#1d3a8a', border: '#3b6ccc', text: '#bfdbfe' },
-  RB:  { bg: '#145229', border: '#22c55e', text: '#86efac' },
-  FB:  { bg: '#145229', border: '#22c55e', text: '#86efac' },
-  WR:  { bg: '#4b1d8c', border: '#a855f7', text: '#e9d5ff' },
-  TE:  { bg: '#0d4a42', border: '#14b8a6', text: '#99f6e4' },
-  K:   { bg: '#5c3a1a', border: '#f59e0b', text: '#fde68a' },
-  P:   { bg: '#5c3a1a', border: '#f59e0b', text: '#fde68a' },
+  QB:  { bg: '#DBEAFE', border: '#2563EB', text: '#1E3A8A' },
+  RB:  { bg: '#DCFCE7', border: '#16A34A', text: '#14532D' },
+  FB:  { bg: '#DCFCE7', border: '#16A34A', text: '#14532D' },
+  WR:  { bg: '#F3E8FF', border: '#9333EA', text: '#581C87' },
+  TE:  { bg: '#CCFBF1', border: '#0D9488', text: '#134E4A' },
+  K:   { bg: '#FEF3C7', border: '#D97706', text: '#78350F' },
+  P:   { bg: '#FEF3C7', border: '#D97706', text: '#78350F' },
   // Defense
-  LB:  { bg: '#6b1b1b', border: '#ef4444', text: '#fecaca' },
-  OLB: { bg: '#6b1b1b', border: '#ef4444', text: '#fecaca' },
-  ILB: { bg: '#6b1b1b', border: '#ef4444', text: '#fecaca' },
-  MLB: { bg: '#6b1b1b', border: '#ef4444', text: '#fecaca' },
-  CB:  { bg: '#6b2c12', border: '#f97316', text: '#fed7aa' },
-  S:   { bg: '#6b2c12', border: '#f97316', text: '#fed7aa' },
-  FS:  { bg: '#6b2c12', border: '#f97316', text: '#fed7aa' },
-  SS:  { bg: '#6b2c12', border: '#f97316', text: '#fed7aa' },
-  DB:  { bg: '#6b2c12', border: '#f97316', text: '#fed7aa' },
-  DE:  { bg: '#3c1a6b', border: '#8b5cf6', text: '#ddd6fe' },
-  DT:  { bg: '#3c1a6b', border: '#8b5cf6', text: '#ddd6fe' },
-  NT:  { bg: '#3c1a6b', border: '#8b5cf6', text: '#ddd6fe' },
-  DL:  { bg: '#3c1a6b', border: '#8b5cf6', text: '#ddd6fe' },
+  LB:  { bg: '#FEE2E2', border: '#DC2626', text: '#7F1D1D' },
+  OLB: { bg: '#FEE2E2', border: '#DC2626', text: '#7F1D1D' },
+  ILB: { bg: '#FEE2E2', border: '#DC2626', text: '#7F1D1D' },
+  MLB: { bg: '#FEE2E2', border: '#DC2626', text: '#7F1D1D' },
+  CB:  { bg: '#FFEDD5', border: '#EA580C', text: '#7C2D12' },
+  S:   { bg: '#FFEDD5', border: '#EA580C', text: '#7C2D12' },
+  FS:  { bg: '#FFEDD5', border: '#EA580C', text: '#7C2D12' },
+  SS:  { bg: '#FFEDD5', border: '#EA580C', text: '#7C2D12' },
+  DB:  { bg: '#FFEDD5', border: '#EA580C', text: '#7C2D12' },
+  DE:  { bg: '#EDE9FE', border: '#7C3AED', text: '#4C1D95' },
+  DT:  { bg: '#EDE9FE', border: '#7C3AED', text: '#4C1D95' },
+  NT:  { bg: '#EDE9FE', border: '#7C3AED', text: '#4C1D95' },
+  DL:  { bg: '#EDE9FE', border: '#7C3AED', text: '#4C1D95' },
 };
 
 function posBadgeStyle(position) {
   const pos = (position || '').toUpperCase().trim();
   const c = POS_STYLES[pos];
   if (!c) {
-    return 'background:#1e2538;border:1px solid #2a3560;color:#6b7fa8;';
+    return 'background:#EAF0F9;border:1px solid #B9C8E0;color:#4A5B7D;';
   }
   return `background:${c.bg};border:1px solid ${c.border};color:${c.text};`;
 }
@@ -341,7 +342,7 @@ function renderTeamGrid() {
   if (!grid) return;
 
   if (state.teams.length === 0) {
-    grid.innerHTML = '<p style="color:#4a5580;grid-column:1/-1;text-align:center;padding:40px">No teams found.</p>';
+    grid.innerHTML = '<p style="color:#4A5B7D;font-weight:700;grid-column:1/-1;text-align:center;padding:40px">No teams found.</p>';
     return;
   }
 

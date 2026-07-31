@@ -1,41 +1,41 @@
 /* ============================================================
-   NFL Stats – supplemental stylesheet
-   Core layout lives in <style> block inside index.html
+   NFL Stats – supplemental stylesheet (light, kid-friendly)
+   Core layout lives in the <style> block inside stats.html
    ============================================================ */
 
 /* ---- Custom scrollbar (Webkit) ---- */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #0a0e1a;
+  background: #EAF0F9;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a3048;
-  border-radius: 3px;
+  background: #B9C8E0;
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3d4a6e;
+  background: #93A5C4;
 }
 
 /* ---- Player headshots ---- */
 .player-headshot {
-  width: 48px;
-  height: 48px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   object-fit: cover;
-  background: #1e2538;
+  background: #EAF0F9;
   flex-shrink: 0;
-  border: 2px solid #1e2840;
+  border: 2px solid #D4DFEF;
 }
 
 .player-headshot-placeholder {
-  width: 48px;
-  height: 48px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  background: #1a2030;
-  border: 2px solid #1e2840;
+  background: #EAF0F9;
+  border: 2px solid #D4DFEF;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -45,17 +45,17 @@
 .player-headshot-placeholder svg {
   width: 26px;
   height: 26px;
-  fill: #3d4a6e;
+  fill: #93A5C4;
 }
 
-/* ---- Position badge ---- */
+/* ---- Position badge (colors come from script.js inline styles) ---- */
 .pos-badge {
   display: inline-block;
-  padding: 2px 7px;
-  border-radius: 4px;
-  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -64,9 +64,9 @@
 .player-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px solid #1a2030;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid #E4EBF5;
   transition: background 0.12s;
 }
 
@@ -76,10 +76,10 @@
 }
 
 .player-rank {
-  width: 18px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #3d4a6e;
+  width: 22px;
+  font-size: 15px;
+  font-weight: 900;
+  color: #00338D;
   flex-shrink: 0;
   text-align: center;
   line-height: 1;
@@ -91,9 +91,9 @@
 }
 
 .player-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: #e8eaf6;
+  font-size: 16px;
+  font-weight: 800;
+  color: #10214B;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -103,14 +103,15 @@
 .player-stat-line {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   margin-top: 4px;
   flex-wrap: wrap;
 }
 
 .player-stat {
-  font-size: 11px;
-  color: #6b7fa8;
+  font-size: 14px;
+  font-weight: 700;
+  color: #4A5B7D;
   line-height: 1.2;
 }
 
@@ -123,58 +124,60 @@
 .skeleton {
   background: linear-gradient(
     90deg,
-    #141923 25%,
-    #1e2840 50%,
-    #141923 75%
+    #E4EBF5 25%,
+    #F2F6FC 50%,
+    #E4EBF5 75%
   );
   background-size: 600px 100%;
   animation: shimmer 1.5s ease-in-out infinite;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 .skeleton-card {
   height: 130px;
-  border-radius: 12px;
+  border-radius: 16px;
 }
 
 /* ---- Data note banner ---- */
 #data-note {
-  background: #0f1626;
-  border: 1px solid #1e3060;
-  border-left: 3px solid #3b82f6;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 13px;
-  color: #8b9ab8;
+  background: #E9F1FF;
+  border: 1px solid #B9CDF0;
+  border-left: 5px solid #00338D;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1D3A75;
   margin-bottom: 22px;
   display: none;
   align-items: center;
   gap: 10px;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 #data-note .note-icon {
-  font-size: 15px;
+  font-size: 17px;
   flex-shrink: 0;
-  color: #3b82f6;
+  color: #00338D;
 }
 
 /* ---- Detail panel scrollbar ---- */
 #detail-panel::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
 }
 #detail-panel::-webkit-scrollbar-track {
-  background: #141923;
+  background: #F2F6FC;
 }
 #detail-panel::-webkit-scrollbar-thumb {
-  background: #2a3048;
-  border-radius: 2px;
+  background: #B9C8E0;
+  border-radius: 3px;
 }
 
 /* ---- No players placeholder ---- */
 .no-players {
-  color: #4a5580;
-  font-size: 13px;
+  color: #4A5B7D;
+  font-size: 15px;
+  font-weight: 600;
   padding: 24px 0 8px;
   text-align: center;
   font-style: italic;
@@ -184,8 +187,8 @@
 @media (max-width: 480px) {
   .player-headshot,
   .player-headshot-placeholder {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
   }
   .player-headshot-placeholder svg {
     width: 22px;

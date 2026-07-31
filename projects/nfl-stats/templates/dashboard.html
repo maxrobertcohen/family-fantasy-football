@@ -6,7 +6,7 @@
 
   {% if leagues %}
     <div class="card">
-      <h2 style="margin-top:0">Your leagues</h2>
+      <h2 style="margin-top:0">🏈 Your leagues</h2>
       <table>
         <tr><th>League</th><th>Your team</th><th>Members</th><th></th></tr>
         {% for l in leagues %}
@@ -24,7 +24,7 @@
   {% endif %}
 
   <div class="card" style="max-width:520px">
-    <h2 style="margin-top:0">Start a new league</h2>
+    <h2 style="margin-top:0">✨ Start a new league</h2>
     <form method="post" action="/league/new">
       <label>League name</label>
       <input name="name" placeholder="e.g. Smith Family Showdown" required />

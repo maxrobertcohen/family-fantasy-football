@@ -4,66 +4,129 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}Hugo's Fantasy League{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    /* Buffalo Bills theme — royal blue #00338D, red #C60C30 */
+    /* ============================================================
+       Hugo's Fantasy League — bright, kid-friendly light theme
+       Buffalo Bills identity: royal blue #00338D · red #C60C30
+       ============================================================ */
     :root{
-      --bg:#06122b; --surface:#0d1f3f; --surface2:#15294d; --border:#1f3d6b;
-      --text-hi:#eef3ff; --text-lo:#9db0d4; --accent:#1e5bd6; --bills-blue:#00338D;
-      --accent2:#C60C30; --gold:#f5c451; --red:#C60C30;
-      --radius:14px; --font:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+      --bg:#F2F6FC;            /* page: very light blue-white   */
+      --surface:#FFFFFF;       /* cards                          */
+      --surface2:#EAF0F9;      /* chips, input wells             */
+      --border:#D4DFEF;        /* soft borders                   */
+      --border-strong:#B9C8E0; /* inputs                         */
+      --text-hi:#10214B;       /* near-navy body text            */
+      --text-lo:#4A5B7D;       /* secondary text (AA on white)   */
+      --bills-blue:#00338D;
+      --bills-blue-dark:#00276B;
+      --accent:#00338D;
+      --accent2:#C60C30;       /* Bills red                      */
+      --red:#C60C30;
+      --gold:#A16207;          /* readable gold on light bg      */
+      --gold-bg:#FFF6D9;
+      --radius:18px;
+      --shadow:0 2px 10px rgba(16,42,100,.08);
+      --font:'Nunito',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
     }
-    html,body{min-height:100%;background:var(--bg);color:var(--text-hi);font-family:var(--font)}
-    a{color:var(--accent);text-decoration:none}
+    html,body{min-height:100%;background:var(--bg);color:var(--text-hi);
+      font-family:var(--font);font-size:17px;line-height:1.55}
+    a{color:var(--bills-blue);font-weight:700;text-decoration:none}
     a:hover{text-decoration:underline}
-    .nav{display:flex;align-items:center;gap:18px;padding:14px 22px;background:var(--bills-blue);
-         border-bottom:3px solid var(--red);position:sticky;top:0;z-index:10}
-    .nav .brand{font-weight:800;font-size:18px;color:#fff;letter-spacing:.3px}
-    .nav .brand span{color:var(--red)}
-    .nav a.link{color:#cddafc}
-    .nav a.link:hover{color:#fff}
+
+    /* ---- Top nav: Bills blue bar with red stripe ---- */
+    .nav{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:14px 22px;
+         background:linear-gradient(180deg,var(--bills-blue) 0%,var(--bills-blue-dark) 100%);
+         border-bottom:4px solid var(--red);position:sticky;top:0;z-index:10;
+         box-shadow:0 2px 10px rgba(0,39,107,.25)}
+    .nav .brand{font-weight:900;font-size:21px;color:#fff;letter-spacing:.2px}
+    .nav .brand:hover{text-decoration:none}
+    .nav .brand span{color:#FFD6DE}
     .nav .spacer{flex:1}
-    .nav a.link{color:#cddafc;font-weight:600;font-size:14px}
-    .nav a.link:hover{color:#fff;text-decoration:none}
-    .wrap{max-width:960px;margin:0 auto;padding:28px 20px 60px}
-    h1{font-size:28px;margin-bottom:6px}
-    h2{font-size:20px;margin:26px 0 12px}
-    p.sub{color:var(--text-lo);margin-bottom:22px}
+    .nav a.link{color:#fff;font-weight:800;font-size:16px;padding:6px 10px;border-radius:10px}
+    .nav a.link:hover{background:rgba(255,255,255,.14);text-decoration:none}
+
+    .wrap{max-width:980px;margin:0 auto;padding:30px 20px 70px}
+    h1{font-size:34px;font-weight:900;letter-spacing:-.3px;margin-bottom:6px;color:var(--text-hi)}
+    h2{font-size:23px;font-weight:800;margin:26px 0 12px;color:var(--bills-blue)}
+    p.sub{color:var(--text-lo);font-size:18px;font-weight:600;margin-bottom:22px}
+
     .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
-          padding:22px;margin-bottom:18px}
-    .btn{display:inline-block;background:var(--accent);color:#fff;font-weight:700;border:none;
-         border-radius:10px;padding:11px 18px;font-size:15px;cursor:pointer}
-    .btn:hover{filter:brightness(1.08);text-decoration:none}
-    .btn.green{background:var(--accent2)}
-    .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text-hi)}
-    .btn.small{padding:6px 12px;font-size:13px;border-radius:8px}
-    input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;
-          padding:11px 13px;color:var(--text-hi);font-size:15px;margin-bottom:12px}
-    label{display:block;font-size:13px;color:var(--text-lo);margin-bottom:5px;font-weight:600}
-    .error{background:rgba(239,68,68,.12);border:1px solid var(--red);color:#fca5a5;
-           padding:10px 14px;border-radius:10px;margin-bottom:16px;font-size:14px}
+          padding:24px;margin-bottom:20px;box-shadow:var(--shadow)}
+
+    /* ---- Chunky buttons a kid can't miss ---- */
+    .btn{display:inline-block;background:var(--bills-blue);color:#fff;font-weight:800;border:none;
+         border-radius:14px;padding:13px 22px;font-size:17px;font-family:inherit;cursor:pointer;
+         box-shadow:0 3px 0 var(--bills-blue-dark);transition:transform .1s,box-shadow .1s}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 4px 0 var(--bills-blue-dark);text-decoration:none}
+    .btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--bills-blue-dark)}
+    .btn.green{background:var(--accent2);box-shadow:0 3px 0 #8E0822}
+    .btn.green:hover{box-shadow:0 4px 0 #8E0822}
+    .btn.green:active{box-shadow:0 1px 0 #8E0822}
+    .btn.ghost{background:#fff;border:2px solid var(--bills-blue);color:var(--bills-blue);
+               box-shadow:none;padding:11px 20px}
+    .btn.ghost:hover{background:#EDF3FF;transform:none;box-shadow:none}
+    .btn.small{padding:8px 16px;font-size:15px;border-radius:11px}
+
+    input,select{width:100%;background:#fff;border:2px solid var(--border-strong);border-radius:12px;
+          padding:12px 14px;color:var(--text-hi);font-size:17px;font-family:inherit;margin-bottom:14px}
+    input:focus,select:focus{outline:none;border-color:var(--bills-blue);
+          box-shadow:0 0 0 3px rgba(0,51,141,.15)}
+    select{width:auto}
+    label{display:block;font-size:15px;color:var(--text-hi);margin-bottom:6px;font-weight:800}
+    .error{background:#FDE8EC;border:2px solid var(--red);color:#8B0A22;font-weight:700;
+           padding:12px 14px;border-radius:12px;margin-bottom:16px;font-size:16px}
+
     table{width:100%;border-collapse:collapse}
-    th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--border);font-size:15px}
-    th{color:var(--text-lo);font-size:12px;text-transform:uppercase;letter-spacing:.5px}
-    .rank{font-weight:800;color:var(--gold);width:36px}
-    .pts{font-weight:800;color:var(--accent2);text-align:right}
-    .muted{color:var(--text-lo);font-size:13px}
-    .pill{display:inline-block;background:var(--surface2);border:1px solid var(--border);
-          border-radius:999px;padding:2px 9px;font-size:11px;color:var(--text-lo);font-weight:700}
+    th,td{text-align:left;padding:12px 12px;border-bottom:1px solid var(--border);font-size:17px}
+    th{color:var(--text-lo);font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.6px}
+    td{font-weight:600}
+    .rank{font-weight:900;font-size:20px;color:var(--bills-blue);width:52px}
+    .pts{font-weight:900;color:var(--accent2);text-align:right;font-size:20px}
+    .muted{color:var(--text-lo);font-size:15px;font-weight:600}
+    .pill{display:inline-block;background:var(--surface2);border:1px solid var(--border-strong);
+          border-radius:999px;padding:3px 11px;font-size:13px;color:#1D3A75;font-weight:800}
     .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-    .leader{border:1px solid var(--gold)!important;box-shadow:0 0 0 1px rgba(245,196,81,.25)}
-    /* Live-vs-historical badge (baseline; Fable restyles) */
-    .data-mode-badge{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;
-      border-radius:12px;margin:0 0 18px;border:1px solid var(--border);background:var(--surface)}
-    .data-mode-badge .dm-pill{font-weight:900;font-size:13px;letter-spacing:.04em;padding:5px 12px;
-      border-radius:999px;white-space:nowrap}
-    .data-mode-badge .dm-note{font-size:13px;color:var(--text-lo)}
-    .mode-live{border-color:#166534;background:rgba(22,101,52,.14)}
-    .mode-live .dm-pill{background:#16a34a;color:#fff}
-    .mode-upcoming{border-color:#92610a;background:rgba(146,97,10,.14)}
-    .mode-upcoming .dm-pill{background:#f59e0b;color:#1a1200}
-    .mode-historical{border-color:#1d4ed8;background:rgba(29,78,216,.12)}
-    .mode-historical .dm-pill{background:#3b82f6;color:#fff}
+
+    /* ---- Standings leader: golden row ---- */
+    .leader{border:2px solid #EAB308!important;box-shadow:0 0 0 3px rgba(234,179,8,.25)}
+    tr.leader td{background:var(--gold-bg)}
+    tr.leader td:first-child{border-radius:10px 0 0 10px}
+    tr.leader td:last-child{border-radius:0 10px 10px 0}
+
+    /* ============================================================
+       LIVE vs HISTORICAL badge — loud so nobody mistakes old
+       stats for live scores.
+       ============================================================ */
+    .data-mode-badge{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:14px 18px;
+      border-radius:16px;margin:0 0 20px;border-width:3px;border-style:solid;box-shadow:var(--shadow)}
+    .data-mode-badge .dm-pill{font-weight:900;font-size:19px;letter-spacing:.03em;padding:9px 20px;
+      border-radius:999px;white-space:nowrap;box-shadow:0 2px 6px rgba(16,42,100,.2)}
+    .data-mode-badge .dm-note{font-size:16px;font-weight:700;color:var(--text-hi);flex:1;min-width:200px}
+    /* Live = green + pulsing */
+    .mode-live{border-color:#15803D;background:#E4F8EC}
+    .mode-live .dm-pill{background:#15803D;color:#fff;animation:livePulse 1.6s ease-in-out infinite}
+    @keyframes livePulse{
+      0%,100%{box-shadow:0 0 0 0 rgba(21,128,61,.45)}
+      50%{box-shadow:0 0 0 9px rgba(21,128,61,0)}
+    }
+    /* Upcoming = amber */
+    .mode-upcoming{border-color:#B45309;background:#FFF4D6}
+    .mode-upcoming .dm-pill{background:#F59E0B;color:#451A03}
+    /* Historical = Bills blue "final score book" */
+    .mode-historical{border-color:var(--bills-blue);background:#E3EDFF}
+    .mode-historical .dm-pill{background:var(--bills-blue);color:#fff}
+
+    @media (max-width:560px){
+      html,body{font-size:16px}
+      h1{font-size:28px}
+      .wrap{padding:20px 14px 50px}
+      .card{padding:18px}
+      .data-mode-badge .dm-pill{font-size:17px}
+    }
   </style>
   {% block head %}{% endblock %}
 </head>
@@ -78,7 +141,7 @@
     {% else %}
       <a class="link" href="/stats">NFL Stats</a>
       <a class="link" href="/login">Log in</a>
-      <a class="btn small" href="/register">Sign up</a>
+      <a class="btn small green" href="/register">Sign up</a>
     {% endif %}
   </nav>
   <div class="wrap">

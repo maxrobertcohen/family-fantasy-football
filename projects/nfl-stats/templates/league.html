@@ -17,7 +17,7 @@
   {% endif %}
 
   <div class="card">
-    <h2 style="margin-top:0">Invite your family &amp; friends</h2>
+    <h2 style="margin-top:0">📣 Invite your family &amp; friends</h2>
     <p class="muted">Share this link — anyone who opens it can make a team in this league.</p>
     <div class="row">
       <input id="joinlink" value="{{ join_url }}" readonly style="margin:0;flex:1;min-width:220px" />
@@ -32,9 +32,14 @@
         <tr><th class="rank">#</th><th>Team</th><th>Manager</th><th>Players</th><th class="pts">Points</th></tr>
         {% for s in standings %}
         <tr class="{{ 'leader' if s['rank'] == 1 and s['total'] > 0 else '' }}">
-          <td class="rank">{{ s['rank'] }}</td>
+          <td class="rank">
+            {%- if s['total'] > 0 and s['rank'] == 1 -%}🥇
+            {%- elif s['total'] > 0 and s['rank'] == 2 -%}🥈
+            {%- elif s['total'] > 0 and s['rank'] == 3 -%}🥉
+            {%- else -%}{{ s['rank'] }}{%- endif -%}
+          </td>
           <td><strong>{{ s['team_name'] }}</strong>
-              {% if s['rank'] == 1 and s['total'] > 0 %}<span class="pill" style="color:var(--gold)">Leader</span>{% endif %}</td>
+              {% if s['rank'] == 1 and s['total'] > 0 %}<span class="pill" style="color:var(--gold);background:var(--gold-bg);border-color:#EAB308">🏆 Leader</span>{% endif %}</td>
           <td class="muted">{{ s['username'] }}</td>
           <td class="muted">{{ s['players']|length }}/{{ roster_limit }}</td>
           <td class="pts">{{ s['total'] }}</td>

@@ -1,9 +1,20 @@
 {% extends "base.html" %}
 {% block title %}Draft · {{ league['name'] }}{% endblock %}
+{% block head %}
+<style>
+  /* Draft board player cell: headshot + name */
+  .d-player{display:flex;align-items:center;gap:10px;min-width:0}
+  .d-shot{width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;
+          background:var(--surface2);border:2px solid var(--border)}
+  .d-shot-blank{display:flex;align-items:center;justify-content:center;font-size:17px}
+  .d-name{font-weight:800}
+  #pool td,#myroster td{padding-top:8px;padding-bottom:8px}
+</style>
+{% endblock %}
 {% block content %}
   <div class="row" style="justify-content:space-between;align-items:flex-start">
     <div>
-      <h1 style="margin-bottom:2px">Draft your team</h1>
+      <h1 style="margin-bottom:2px">🏈 Draft your team</h1>
       <p class="sub" style="margin-bottom:8px">{{ league['name'] }} · pick up to {{ roster_limit }} players ·
          season {{ season }}</p>
     </div>
@@ -100,11 +111,15 @@
       for(const p of rows){
         const isTaken = taken.has(p.player_id) || mine.has(p.player_id);
         let action;
-        if(mine.has(p.player_id)) action = '<span class="pill" style="color:var(--accent2)">On your team</span>';
+        if(mine.has(p.player_id)) action = '<span class="pill" style="color:var(--accent2)">⭐ On your team</span>';
         else if(isTaken) action = '<span class="pill">Taken</span>';
         else if(full) action = '<span class="muted">Roster full</span>';
         else action = `<button class="btn small" onclick="draftPlayer('${p.player_id}')">Draft</button>`;
-        html += `<tr><td>${p.name}</td><td><span class="pill">${p.position||''}</span></td>`+
+        const shot = p.headshot
+          ? `<img class="d-shot" src="${p.headshot}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`
+          : `<span class="d-shot d-shot-blank" aria-hidden="true">🏈</span>`;
+        html += `<tr><td><div class="d-player">${shot}<span class="d-name">${p.name}</span></div></td>`+
+                `<td><span class="pill">${p.position||''}</span></td>`+
                 `<td class="muted">${p.nfl_team||''}</td><td class="pts">${p.total}</td><td>${action}</td></tr>`;
       }
       t.innerHTML = html;

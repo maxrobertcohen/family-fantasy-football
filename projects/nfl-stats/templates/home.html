@@ -1,23 +1,31 @@
 {% extends "base.html" %}
 {% block title %}Hugo's Fantasy League{% endblock %}
+{% block head %}
+<style>
+  .steps{list-style:none;display:grid;gap:12px;margin:6px 0 0}
+  .steps li{display:flex;align-items:center;gap:14px;font-size:17px;font-weight:600;
+            color:var(--text-hi);line-height:1.45}
+  .step-num{flex-shrink:0;width:38px;height:38px;border-radius:50%;background:var(--bills-blue);
+            color:#fff;font-weight:900;font-size:18px;display:flex;align-items:center;
+            justify-content:center;box-shadow:0 2px 0 var(--bills-blue-dark)}
+  .gobills{color:var(--red);font-weight:900;letter-spacing:1px;font-size:20px;margin-bottom:4px}
+</style>
+{% endblock %}
 {% block content %}
-  <h1>Hugo's Fantasy League 🦬</h1>
-  <p class="sub" style="color:var(--red);font-weight:700;letter-spacing:.5px;margin-bottom:4px">GO BILLS!</p>
+  <h1>Hugo's Fantasy League 🦬🏈</h1>
+  <p class="sub gobills">GO BILLS!</p>
   <p class="sub">Make a league, share the link with your family and friends, draft real NFL
      players, and let the site track everyone's stats to tell you who's winning.</p>
 
   <div class="card">
-    <div class="row" style="justify-content:space-between">
-      <div>
-        <h2 style="margin-top:0">How it works</h2>
-        <p class="muted" style="max-width:520px;line-height:1.6">
-          1. Everyone makes an account &nbsp;·&nbsp; 2. One person creates a league and shares the
-          link &nbsp;·&nbsp; 3. Each person drafts up to {{ 8 }} NFL players (no two teams can share a
-          player) &nbsp;·&nbsp; 4. The site adds up their real fantasy points and ranks the standings.
-        </p>
-      </div>
-    </div>
-    <div class="row" style="margin-top:16px">
+    <h2 style="margin-top:0">How it works</h2>
+    <ol class="steps">
+      <li><span class="step-num">1</span>Everyone makes an account</li>
+      <li><span class="step-num">2</span>One person creates a league and shares the link</li>
+      <li><span class="step-num">3</span>Each person drafts up to {{ 8 }} real NFL players — no two teams can share a player</li>
+      <li><span class="step-num">4</span>The site adds up their real fantasy points and shows who's winning 🏆</li>
+    </ol>
+    <div class="row" style="margin-top:20px">
       {% if user %}
         <a class="btn" href="/dashboard">Go to my leagues</a>
       {% else %}
@@ -29,8 +37,8 @@
   </div>
 
   <div class="card">
-    <h2 style="margin-top:0">Also inside: weekly team leaders</h2>
-    <p class="muted">The top 5 offense and top 5 defense players for every one of the 32 NFL
+    <h2 style="margin-top:0">📊 Also inside: weekly team leaders</h2>
+    <p class="muted" style="font-size:16px">The top 5 offense and top 5 defense players for every one of the 32 NFL
        teams, each week — <a href="/stats">open the stats board →</a></p>
   </div>
 {% endblock %}
