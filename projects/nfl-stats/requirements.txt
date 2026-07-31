@@ -2,3 +2,4 @@ flask>=3.0
 requests>=2.31
 pandas>=2.1
 werkzeug>=3.0
+gunicorn>=21.0
