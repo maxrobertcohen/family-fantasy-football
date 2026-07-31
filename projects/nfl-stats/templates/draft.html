@@ -52,6 +52,16 @@
     const LIMIT  = {{ roster_limit }};
     let POOL = [];
     let taken = new Set();
+    // Full team names so searching "Bills" (not just "BUF") works.
+    const TEAM_NAMES = {ARI:'cardinals arizona',ATL:'falcons atlanta',BAL:'ravens baltimore',
+      BUF:'bills buffalo',CAR:'panthers carolina',CHI:'bears chicago',CIN:'bengals cincinnati',
+      CLE:'browns cleveland',DAL:'cowboys dallas',DEN:'broncos denver',DET:'lions detroit',
+      GB:'packers green bay',HOU:'texans houston',IND:'colts indianapolis',JAX:'jaguars jacksonville',
+      KC:'chiefs kansas city',LV:'raiders las vegas',LAC:'chargers los angeles',LAR:'rams los angeles',
+      MIA:'dolphins miami',MIN:'vikings minnesota',NE:'patriots new england',NO:'saints new orleans',
+      NYG:'giants new york',NYJ:'jets new york',PHI:'eagles philadelphia',PIT:'steelers pittsburgh',
+      SF:'49ers san francisco niners',SEA:'seahawks seattle',TB:'buccaneers bucs tampa bay',
+      TEN:'titans tennessee',WAS:'commanders washington'};
     let mine  = new Set([{% for p in my_roster %}{{ p['player_id']|tojson }}{{ ',' if not loop.last }}{% endfor %}]);
 
     async function loadPool(){
@@ -68,9 +78,11 @@
       const full = mine.size >= LIMIT;
       const searching = !!(q || pos);
       let html = '<tr><th>Player</th><th>Pos</th><th>NFL</th><th class="pts">'+SEASON+' Pts</th><th></th></tr>';
-      const matches = POOL.filter(p =>
-        (!q || p.name.toLowerCase().includes(q)) &&
-        (!pos || (p.position||'').toUpperCase() === pos));
+      const matches = POOL.filter(p => {
+        const tm = (p.nfl_team||'').toUpperCase();
+        const hay = (p.name + ' ' + tm + ' ' + (p.position||'') + ' ' + (TEAM_NAMES[tm]||'')).toLowerCase();
+        return (!q || hay.includes(q)) && (!pos || (p.position||'').toUpperCase() === pos);
+      });
       // Show every match when filtering; cap the unfiltered view so the initial render stays light.
       const CAP = searching ? 500 : 150;
       const rows = matches.slice(0, CAP);
