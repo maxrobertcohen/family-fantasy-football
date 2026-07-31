@@ -530,7 +530,7 @@ def api_pool():
             rows = db.execute("SELECT player_id FROM roster WHERE league_id=?", (league["id"],)).fetchall()
             taken = {r["player_id"] for r in rows}
     out = []
-    for p in pool[:300]:
+    for p in pool:  # every player in the season pool — no top-N cap
         q = dict(p)
         q["taken"] = p["player_id"] in taken
         out.append(q)

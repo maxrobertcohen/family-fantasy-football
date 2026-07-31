@@ -31,7 +31,16 @@
   <div class="card">
     <div class="row" style="justify-content:space-between">
       <h2 style="margin:0">Player board</h2>
-      <input id="search" placeholder="Search a player…" style="margin:0;max-width:240px" oninput="renderPool()" />
+      <div class="row" style="gap:8px;margin:0">
+        <select id="posfilter" style="margin:0" onchange="renderPool()">
+          <option value="">All positions</option>
+          <option value="QB">QB</option>
+          <option value="RB">RB</option>
+          <option value="WR">WR</option>
+          <option value="TE">TE</option>
+        </select>
+        <input id="search" placeholder="Search any player…" style="margin:0;max-width:240px" oninput="renderPool()" />
+      </div>
     </div>
     <p class="muted" id="poolstatus" style="margin-top:8px">Loading players…</p>
     <table id="pool" style="margin-top:6px"></table>
@@ -49,17 +58,26 @@
       const r = await fetch(`/api/pool?season=${SEASON}&league=${encodeURIComponent(LEAGUE)}`);
       POOL = await r.json();
       taken = new Set(POOL.filter(p=>p.taken).map(p=>p.player_id));
-      document.getElementById('poolstatus').textContent =
-        POOL.length ? `Top ${POOL.length} players by ${SEASON} fantasy points` : 'No player data available.';
       renderPool();
     }
 
     function renderPool(){
       const q = (document.getElementById('search').value||'').toLowerCase();
+      const pos = (document.getElementById('posfilter').value||'').toUpperCase();
       const t = document.getElementById('pool');
       const full = mine.size >= LIMIT;
+      const searching = !!(q || pos);
       let html = '<tr><th>Player</th><th>Pos</th><th>NFL</th><th class="pts">'+SEASON+' Pts</th><th></th></tr>';
-      const rows = POOL.filter(p => !q || p.name.toLowerCase().includes(q)).slice(0, q?120:120);
+      const matches = POOL.filter(p =>
+        (!q || p.name.toLowerCase().includes(q)) &&
+        (!pos || (p.position||'').toUpperCase() === pos));
+      // Show every match when filtering; cap the unfiltered view so the initial render stays light.
+      const CAP = searching ? 500 : 150;
+      const rows = matches.slice(0, CAP);
+      const status = document.getElementById('poolstatus');
+      if(!POOL.length){ status.textContent = 'No player data available.'; }
+      else if(searching){ status.textContent = `${matches.length} match${matches.length===1?'':'es'} of ${POOL.length} players`+(matches.length>CAP?` (showing ${CAP})`:''); }
+      else { status.textContent = `Showing top ${Math.min(CAP,POOL.length)} of ${POOL.length} players — search or filter to draft anyone`; }
       for(const p of rows){
         const isTaken = taken.has(p.player_id) || mine.has(p.player_id);
         let action;
