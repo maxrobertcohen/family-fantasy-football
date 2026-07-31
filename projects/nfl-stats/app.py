@@ -236,13 +236,14 @@ def filter_week(df, season: int, week: int):
     if df is None or df.empty:
         return pd.DataFrame()
     try:
-        work = df.copy()
-        work["_season"] = pd.to_numeric(work.get("season", pd.Series(dtype=float)), errors="coerce")
-        work["_week"] = pd.to_numeric(work.get("week", pd.Series(dtype=float)), errors="coerce")
-        mask = (work["_season"] == season) & (work["_week"] == week)
-        if "season_type" in work.columns:
-            mask &= work["season_type"].astype(str).str.upper().str.strip() == "REG"
-        return work[mask].copy()
+        # Build the mask from columns directly (no full-frame copy) — copying the
+        # whole 130k-row table per request is what OOM-killed the small machine.
+        season_col = pd.to_numeric(df.get("season", pd.Series(dtype=float)), errors="coerce")
+        week_col = pd.to_numeric(df.get("week", pd.Series(dtype=float)), errors="coerce")
+        mask = (season_col == season) & (week_col == week)
+        if "season_type" in df.columns:
+            mask &= df["season_type"].astype(str).str.upper().str.strip() == "REG"
+        return df[mask].copy()
     except Exception as exc:
         print(f"[ffl] filter_week error: {exc}")
         return pd.DataFrame()
@@ -277,9 +278,8 @@ def season_player_pool(season: int):
     df = fetch_dataframe(OFFENSE_CSV_URL, "off_df")
     if df is None or df.empty:
         return []
-    work = df.copy()
-    work["_season"] = pd.to_numeric(work.get("season", pd.Series(dtype=float)), errors="coerce")
-    work = work[work["_season"] == season]
+    season_col = pd.to_numeric(df.get("season", pd.Series(dtype=float)), errors="coerce")
+    work = df[season_col == season].copy()   # copy only this season's slice
     if work.empty:
         return []
 
@@ -999,15 +999,36 @@ def api_stats():
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
+_OFF_KEEP = ["season", "week", "season_type", "player_id", "player_display_name",
+             "position", "recent_team", "headshot_url", "fantasy_points_ppr",
+             "passing_yards", "passing_tds", "carries", "rushing_yards", "rushing_tds",
+             "receptions", "receiving_yards", "receiving_tds"]
+_DEF_KEEP = ["season", "week", "season_type", "player_display_name", "recent_team",
+             "position", "headshot_url", "def_tackles", "def_tackles_solo", "def_sacks",
+             "def_interceptions", "def_pass_defended", "def_tds"]
+
+
+def _slim(df, keep, min_season=2023):
+    """Drop old seasons and unused columns to keep the in-memory footprint small."""
+    if df is None or df.empty:
+        return df
+    cols = [c for c in keep if c in df.columns]
+    if "season" in df.columns:
+        s = pd.to_numeric(df["season"], errors="coerce")
+        return df.loc[s >= min_season, cols].copy()
+    return df[cols].copy()
+
+
 def warm_caches():
-    """Preload season data at startup so no user request ever triggers a slow
-    CSV download (which otherwise caused intermittent 502s per gunicorn worker)."""
+    """Preload + slim season data at startup so no user request triggers a slow
+    CSV download (avoids per-worker 502s) and the footprint fits the machine."""
     try:
-        fetch_dataframe(OFFENSE_CSV_URL, "off_df")
-        fetch_dataframe(DEFENSE_CSV_URL, "def_df")
+        _cache_set("off_df", _slim(fetch_dataframe(OFFENSE_CSV_URL, "off_df"), _OFF_KEEP))
+        _cache_set("def_df", _slim(fetch_dataframe(DEFENSE_CSV_URL, "def_df"), _DEF_KEEP))
+        _cache.pop("pool_%d" % DATA_SEASON, None)
         season_player_pool(DATA_SEASON)
         data_status()
-        print("[ffl] warm_caches: season data preloaded")
+        print("[ffl] warm_caches: season data preloaded + slimmed")
     except Exception as exc:
         print(f"[ffl] warm_caches: {exc}")
 

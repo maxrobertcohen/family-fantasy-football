@@ -5,7 +5,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 ENV FFL_DB=/data/league.db
 EXPOSE 8080
-# --preload: load + warm the app once in the master, then fork workers that
-# inherit the populated cache (copy-on-write) — so no worker downloads data
-# mid-request. --timeout 180 covers the one-time startup CSV fetch.
-CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:8080", "--timeout", "180", "--workers", "2", "--preload"]
+# One threaded worker: a single in-memory copy of the season data (2 workers
+# OOM-killed the 512MB machine). Threads handle the family's low concurrency.
+CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:8080", "--timeout", "180", "--workers", "1", "--threads", "8"]
