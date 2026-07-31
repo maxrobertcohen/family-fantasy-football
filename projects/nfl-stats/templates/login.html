@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Log in · Family Fantasy{% endblock %}
+{% block content %}
+  <h1>Log in</h1>
+  <p class="sub">Welcome back.</p>
+  <div class="card" style="max-width:420px">
+    {% if error %}<div class="error">{{ error }}</div>{% endif %}
+    <form method="post">
+      <label>Name</label>
+      <input name="username" autocomplete="username" required />
+      <label>Password</label>
+      <input name="password" type="password" autocomplete="current-password" required />
+      <button class="btn" type="submit">Log in</button>
+    </form>
+    <p class="muted" style="margin-top:14px">New here? <a href="/register">Create an account</a></p>
+  </div>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Draft · {{ league['name'] }}{% endblock %}
+{% block content %}
+  <div class="row" style="justify-content:space-between;align-items:flex-start">
+    <div>
+      <h1 style="margin-bottom:2px">Draft your team</h1>
+      <p class="sub" style="margin-bottom:8px">{{ league['name'] }} · pick up to {{ roster_limit }} players ·
+         season {{ season }}</p>
+    </div>
+    <a class="btn ghost" href="/league/{{ league['code'] }}?season={{ season }}">← Standings</a>
+  </div>
+
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <h2 style="margin:0">My roster (<span id="rostercount">{{ my_roster|length }}</span>/{{ roster_limit }})</h2>
+    </div>
+    <table id="myroster" style="margin-top:10px">
+      <tr><th>Player</th><th>Pos</th><th>NFL</th><th></th></tr>
+      {% for p in my_roster %}
+      <tr data-pid="{{ p['player_id'] }}">
+        <td>{{ p['player_name'] }}</td><td><span class="pill">{{ p['position'] }}</span></td>
+        <td class="muted">{{ p['nfl_team'] }}</td>
+        <td><button class="btn small ghost" onclick="dropPlayer('{{ p['player_id'] }}')">Drop</button></td>
+      </tr>
+      {% endfor %}
+    </table>
+    <p id="rosterempty" class="muted" style="margin-top:8px;{{ 'display:none' if my_roster else '' }}">
+      No players yet — pick from the board below.</p>
+  </div>
+
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <h2 style="margin:0">Player board</h2>
+      <input id="search" placeholder="Search a player…" style="margin:0;max-width:240px" oninput="renderPool()" />
+    </div>
+    <p class="muted" id="poolstatus" style="margin-top:8px">Loading players…</p>
+    <table id="pool" style="margin-top:6px"></table>
+  </div>
+
+  <script>
+    const LEAGUE = {{ league['code']|tojson }};
+    const SEASON = {{ season }};
+    const LIMIT  = {{ roster_limit }};
+    let POOL = [];
+    let taken = new Set();
+    let mine  = new Set([{% for p in my_roster %}{{ p['player_id']|tojson }}{{ ',' if not loop.last }}{% endfor %}]);
+
+    async function loadPool(){
+      const r = await fetch(`/api/pool?season=${SEASON}&league=${encodeURIComponent(LEAGUE)}`);
+      POOL = await r.json();
+      taken = new Set(POOL.filter(p=>p.taken).map(p=>p.player_id));
+      document.getElementById('poolstatus').textContent =
+        POOL.length ? `Top ${POOL.length} players by ${SEASON} fantasy points` : 'No player data available.';
+      renderPool();
+    }
+
+    function renderPool(){
+      const q = (document.getElementById('search').value||'').toLowerCase();
+      const t = document.getElementById('pool');
+      const full = mine.size >= LIMIT;
+      let html = '<tr><th>Player</th><th>Pos</th><th>NFL</th><th class="pts">'+SEASON+' Pts</th><th></th></tr>';
+      const rows = POOL.filter(p => !q || p.name.toLowerCase().includes(q)).slice(0, q?120:120);
+      for(const p of rows){
+        const isTaken = taken.has(p.player_id) || mine.has(p.player_id);
+        let action;
+        if(mine.has(p.player_id)) action = '<span class="pill" style="color:var(--accent2)">On your team</span>';
+        else if(isTaken) action = '<span class="pill">Taken</span>';
+        else if(full) action = '<span class="muted">Roster full</span>';
+        else action = `<button class="btn small" onclick="draftPlayer('${p.player_id}')">Draft</button>`;
+        html += `<tr><td>${p.name}</td><td><span class="pill">${p.position||''}</span></td>`+
+                `<td class="muted">${p.nfl_team||''}</td><td class="pts">${p.total}</td><td>${action}</td></tr>`;
+      }
+      t.innerHTML = html;
+    }
+
+    async function draftPlayer(pid){
+      const r = await fetch('/api/draft', {method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({league:LEAGUE, player_id:pid, season:SEASON})});
+      const j = await r.json();
+      if(!j.ok){ alert(j.error||'Could not draft.'); return; }
+      mine.add(pid); taken.add(pid);
+      addRosterRow(j.player);
+      updateCount(); renderPool();
+    }
+
+    async function dropPlayer(pid){
+      const r = await fetch('/api/drop', {method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({league:LEAGUE, player_id:pid})});
+      const j = await r.json();
+      if(!j.ok){ alert(j.error||'Could not drop.'); return; }
+      mine.delete(pid); taken.delete(pid);
+      const row = document.querySelector(`#myroster tr[data-pid="${pid}"]`);
+      if(row) row.remove();
+      updateCount(); renderPool();
+    }
+
+    function addRosterRow(p){
+      const t = document.getElementById('myroster');
+      const tr = document.createElement('tr');
+      tr.setAttribute('data-pid', p.player_id);
+      tr.innerHTML = `<td>${p.name}</td><td><span class="pill">${p.position||''}</span></td>`+
+        `<td class="muted">${p.nfl_team||''}</td>`+
+        `<td><button class="btn small ghost" onclick="dropPlayer('${p.player_id}')">Drop</button></td>`;
+      t.appendChild(tr);
+    }
+
+    function updateCount(){
+      document.getElementById('rostercount').textContent = mine.size;
+      document.getElementById('rosterempty').style.display = mine.size ? 'none' : '';
+    }
+
+    loadPool();
+  </script>
+{% endblock %}

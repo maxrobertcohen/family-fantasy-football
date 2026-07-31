@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Join {{ league['name'] }}{% endblock %}
+{% block content %}
+  <h1>Join “{{ league['name'] }}”</h1>
+  <p class="sub">You were invited to this league. Name your team to join.</p>
+  <div class="card" style="max-width:420px">
+    <form method="post">
+      <label>Your team name</label>
+      <input name="team_name" placeholder="e.g. {{ user['username'] }}'s Team" />
+      <button class="btn green" type="submit">Join league</button>
+    </form>
+  </div>
+{% endblock %}

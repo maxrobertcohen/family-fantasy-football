@@ -1,5 +1,5 @@
 {
-  "name": "NFL Stats",
+  "name": "Family Fantasy Football",
   "kind": "web",
   "runtime": "python",
   "run_cmd": "cd projects/nfl-stats && python app.py"

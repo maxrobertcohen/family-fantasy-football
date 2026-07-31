@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}{{ league['name'] }} · Standings{% endblock %}
+{% block content %}
+  <div class="row" style="justify-content:space-between;align-items:flex-start">
+    <div>
+      <h1 style="margin-bottom:2px">{{ league['name'] }}</h1>
+      <p class="sub" style="margin-bottom:8px">Standings · {{ season }} season points</p>
+    </div>
+    <a class="btn" href="/league/{{ league['code'] }}/draft?season={{ season }}">Draft players</a>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Invite your family &amp; friends</h2>
+    <p class="muted">Share this link — anyone who opens it can make a team in this league.</p>
+    <div class="row">
+      <input id="joinlink" value="{{ join_url }}" readonly style="margin:0;flex:1;min-width:220px" />
+      <button class="btn small" onclick="copyLink()">Copy link</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">🏆 Standings</h2>
+    {% if standings and standings[0]['total'] > 0 %}
+      <table>
+        <tr><th class="rank">#</th><th>Team</th><th>Manager</th><th>Players</th><th class="pts">Points</th></tr>
+        {% for s in standings %}
+        <tr class="{{ 'leader' if s['rank'] == 1 and s['total'] > 0 else '' }}">
+          <td class="rank">{{ s['rank'] }}</td>
+          <td><strong>{{ s['team_name'] }}</strong>
+              {% if s['rank'] == 1 and s['total'] > 0 %}<span class="pill" style="color:var(--gold)">Leader</span>{% endif %}</td>
+          <td class="muted">{{ s['username'] }}</td>
+          <td class="muted">{{ s['players']|length }}/{{ roster_limit }}</td>
+          <td class="pts">{{ s['total'] }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    {% else %}
+      <p class="muted">No points yet — everyone still needs to draft players. Hit
+        <strong>Draft players</strong> above to build your team.</p>
+      <table style="margin-top:12px">
+        <tr><th>Team</th><th>Manager</th><th>Players drafted</th></tr>
+        {% for s in standings %}
+        <tr><td><strong>{{ s['team_name'] }}</strong></td><td class="muted">{{ s['username'] }}</td>
+            <td class="muted">{{ s['players']|length }}/{{ roster_limit }}</td></tr>
+        {% endfor %}
+      </table>
+    {% endif %}
+  </div>
+
+  {% for s in standings %}
+    {% if s['players'] %}
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <h2 style="margin:0">{{ s['team_name'] }}</h2>
+        <span class="pts">{{ s['total'] }} pts</span>
+      </div>
+      <table style="margin-top:10px">
+        <tr><th>Player</th><th>Pos</th><th>NFL</th><th class="pts">Pts</th></tr>
+        {% for p in s['players'] %}
+        <tr><td>{{ p['name'] }}</td><td><span class="pill">{{ p['position'] }}</span></td>
+            <td class="muted">{{ p['nfl_team'] }}</td><td class="pts">{{ p['points'] }}</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+    {% endif %}
+  {% endfor %}
+
+  <script>
+    function copyLink(){
+      var el=document.getElementById('joinlink');
+      el.select(); el.setSelectionRange(0,99999);
+      navigator.clipboard.writeText(el.value).then(function(){
+        event.target.textContent='Copied!';
+        setTimeout(function(){event.target.textContent='Copy link';},1500);
+      });
+    }
+  </script>
+{% endblock %}

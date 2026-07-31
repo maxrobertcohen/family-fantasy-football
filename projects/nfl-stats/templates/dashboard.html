@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}My Leagues · Family Fantasy{% endblock %}
+{% block content %}
+  <h1>Hi {{ user['username'] }} 👋</h1>
+  <p class="sub">Your leagues live here. Make a new one or jump back into an old one.</p>
+
+  {% if leagues %}
+    <div class="card">
+      <h2 style="margin-top:0">Your leagues</h2>
+      <table>
+        <tr><th>League</th><th>Your team</th><th>Members</th><th></th></tr>
+        {% for l in leagues %}
+        <tr>
+          <td><strong>{{ l['name'] }}</strong></td>
+          <td>{{ l['team_name'] }}</td>
+          <td><span class="pill">{{ l['members'] }} playing</span></td>
+          <td><a class="btn small" href="/league/{{ l['code'] }}">Open</a></td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+  {% else %}
+    <div class="card"><p class="muted">You're not in any leagues yet. Create one below!</p></div>
+  {% endif %}
+
+  <div class="card" style="max-width:520px">
+    <h2 style="margin-top:0">Start a new league</h2>
+    <form method="post" action="/league/new">
+      <label>League name</label>
+      <input name="name" placeholder="e.g. Smith Family Showdown" required />
+      <label>Your team name</label>
+      <input name="team_name" placeholder="e.g. {{ user['username'] }}'s Team" />
+      <button class="btn green" type="submit">Create league</button>
+    </form>
+  </div>
+{% endblock %}
