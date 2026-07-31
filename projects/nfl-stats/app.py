@@ -217,19 +217,59 @@ def ensure_hex(color: str) -> str:
     return c if c.startswith("#") else f"#{c}"
 
 
-def fetch_dataframe(url: str, cache_key: str):
-    cached = _cache_get(cache_key)
-    if cached is not None:
-        return cached
+# Only these columns are ever used — dropping the rest (and old seasons) keeps
+# the in-memory frames tiny (~13MB instead of ~200MB), which is what kept the
+# 512MB machine from OOM-killing workers on /api/stats.
+_OFF_KEEP = ["season", "week", "season_type", "player_id", "player_display_name",
+             "position", "recent_team", "headshot_url", "fantasy_points_ppr",
+             "passing_yards", "passing_tds", "carries", "rushing_yards", "rushing_tds",
+             "receptions", "receiving_yards", "receiving_tds"]
+_DEF_KEEP = ["season", "week", "season_type", "player_display_name", "recent_team",
+             "position", "headshot_url", "def_tackles", "def_tackles_solo", "def_sacks",
+             "def_interceptions", "def_pass_defended", "def_tds"]
+# Keep last completed season + the live one(s). nflverse's CSV auto-updates as
+# the real season is played, so a new season flows in on the next cache refresh.
+_MIN_SEASON = DATA_SEASON - 1
+
+
+def _download_csv(url: str):
     try:
         resp = requests.get(url, timeout=120, allow_redirects=True)
         resp.raise_for_status()
-        df = pd.read_csv(io.BytesIO(resp.content), low_memory=False)
-        _cache_set(cache_key, df)
-        return df
+        return pd.read_csv(io.BytesIO(resp.content), low_memory=False)
     except Exception as exc:
-        print(f"[ffl] fetch_dataframe({url}): {exc}")
+        print(f"[ffl] _download_csv({url}): {exc}")
         return None
+
+
+def _slim(df, keep):
+    if df is None or df.empty:
+        return df
+    cols = [c for c in keep if c in df.columns]
+    if "season" in df.columns:
+        s = pd.to_numeric(df["season"], errors="coerce")
+        return df.loc[s >= _MIN_SEASON, cols].copy()
+    return df[cols].copy()
+
+
+def _load_slim(url, cache_key, keep):
+    """Download → keep only recent seasons + used columns → cache the slim frame.
+    The full CSV is never cached, so refreshes stay small (no OOM, no big memory)."""
+    cached = _cache_get(cache_key)
+    if cached is not None:
+        return cached
+    df = _slim(_download_csv(url), keep)
+    if df is not None:
+        _cache_set(cache_key, df)
+    return df
+
+
+def get_offense_df():
+    return _load_slim(OFFENSE_CSV_URL, "off_df", _OFF_KEEP)
+
+
+def get_defense_df():
+    return _load_slim(DEFENSE_CSV_URL, "def_df", _DEF_KEEP)
 
 
 def filter_week(df, season: int, week: int):
@@ -275,7 +315,7 @@ def season_player_pool(season: int):
     if cached is not None:
         return cached
 
-    df = fetch_dataframe(OFFENSE_CSV_URL, "off_df")
+    df = get_offense_df()
     if df is None or df.empty:
         return []
     season_col = pd.to_numeric(df.get("season", pd.Series(dtype=float)), errors="coerce")
@@ -631,7 +671,9 @@ def league_view(code):
     ).fetchone()
     if not membership:
         return redirect(url_for("join", code=code))
-    season = int(request.args.get("season", DATA_SEASON))
+    # Standings follow the LIVE season automatically once it has real data
+    # (default_season = live season when is_live, else last completed season).
+    season = int(request.args.get("season", data_status()["default_season"]))
     standings = compute_standings(league["id"], season)
     my = next((s for s in standings if s["user_id"] == user["id"]), None)
     join_url = url_for("join", code=code, _external=True)
@@ -912,8 +954,8 @@ def api_stats():
     except (TypeError, ValueError):
         season, week = 2024, 18
 
-    off_df = fetch_dataframe(OFFENSE_CSV_URL, "off_df")
-    def_df = fetch_dataframe(DEFENSE_CSV_URL, "def_df")
+    off_df = get_offense_df()
+    def_df = get_defense_df()
     off_week = filter_week(off_df, season, week)
     def_week = filter_week(def_df, season, week)
     data_note = None
@@ -999,36 +1041,16 @@ def api_stats():
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
-_OFF_KEEP = ["season", "week", "season_type", "player_id", "player_display_name",
-             "position", "recent_team", "headshot_url", "fantasy_points_ppr",
-             "passing_yards", "passing_tds", "carries", "rushing_yards", "rushing_tds",
-             "receptions", "receiving_yards", "receiving_tds"]
-_DEF_KEEP = ["season", "week", "season_type", "player_display_name", "recent_team",
-             "position", "headshot_url", "def_tackles", "def_tackles_solo", "def_sacks",
-             "def_interceptions", "def_pass_defended", "def_tds"]
-
-
-def _slim(df, keep, min_season=2023):
-    """Drop old seasons and unused columns to keep the in-memory footprint small."""
-    if df is None or df.empty:
-        return df
-    cols = [c for c in keep if c in df.columns]
-    if "season" in df.columns:
-        s = pd.to_numeric(df["season"], errors="coerce")
-        return df.loc[s >= min_season, cols].copy()
-    return df[cols].copy()
-
-
 def warm_caches():
-    """Preload + slim season data at startup so no user request triggers a slow
-    CSV download (avoids per-worker 502s) and the footprint fits the machine."""
+    """Preload the slim season data at startup so no user request triggers a
+    slow CSV download (avoids per-worker 502s). Frames are already slimmed by
+    the loader, so this also keeps the footprint small on refresh."""
     try:
-        _cache_set("off_df", _slim(fetch_dataframe(OFFENSE_CSV_URL, "off_df"), _OFF_KEEP))
-        _cache_set("def_df", _slim(fetch_dataframe(DEFENSE_CSV_URL, "def_df"), _DEF_KEEP))
-        _cache.pop("pool_%d" % DATA_SEASON, None)
+        get_offense_df()
+        get_defense_df()
         season_player_pool(DATA_SEASON)
         data_status()
-        print("[ffl] warm_caches: season data preloaded + slimmed")
+        print("[ffl] warm_caches: season data preloaded (slim)")
     except Exception as exc:
         print(f"[ffl] warm_caches: {exc}")
 
