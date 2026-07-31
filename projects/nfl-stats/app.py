@@ -321,8 +321,12 @@ def data_status():
     live_week = int(live.get("week", 1))
     is_live = False
     if live_season > DATA_SEASON:
-        off_df = fetch_dataframe(OFFENSE_CSV_URL, "off_df")
-        is_live = not filter_week(off_df, live_season, live_week).empty
+        # Cached-only: never trigger a large CSV download inside a page render /
+        # this endpoint (that caused cold-start 502s). If the live season's data
+        # isn't loaded yet, treat it as not-live; a later stats view loads the CSV
+        # and this refreshes within the cache TTL once real data exists.
+        off_df = _cache_get("off_df")
+        is_live = off_df is not None and not filter_week(off_df, live_season, live_week).empty
     elif live_season == DATA_SEASON:
         is_live = True
     if is_live:
