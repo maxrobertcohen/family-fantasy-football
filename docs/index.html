@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Family Fantasy Football 🦬</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#06122b;--surface:#0d1f3f;--surface2:#15294d;--border:#1f3d6b;
+    --text-hi:#eef3ff;--text-lo:#9db0d4;--accent:#1e5bd6;--bills:#00338D;
+    --red:#C60C30;--gold:#f5c451;--radius:14px;
+    --font:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  html,body{min-height:100%;background:var(--bg);color:var(--text-hi);font-family:var(--font)}
+  .nav{display:flex;align-items:center;gap:14px;padding:14px 22px;background:var(--bills);
+       border-bottom:3px solid var(--red);position:sticky;top:0;z-index:10}
+  .nav .brand{font-weight:800;font-size:18px;color:#fff}
+  .nav .brand span{color:var(--red)}
+  .nav .spacer{flex:1}
+  .nav .who{color:#cddafc;font-size:14px;font-weight:600}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px 18px 70px}
+  h1{font-size:26px;margin-bottom:2px}
+  .go{color:var(--red);font-weight:800;letter-spacing:.5px;margin-bottom:6px}
+  p.sub{color:var(--text-lo);margin-bottom:20px}
+  .grid{display:grid;grid-template-columns:1fr 1.3fr;gap:16px}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:16px}
+  h2{font-size:18px;margin-bottom:12px}
+  .btn{background:var(--accent);color:#fff;font-weight:700;border:none;border-radius:9px;padding:9px 14px;font-size:14px;cursor:pointer}
+  .btn:hover{filter:brightness(1.1)}
+  .btn.small{padding:5px 10px;font-size:12px;border-radius:7px}
+  .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text-hi)}
+  .btn.red{background:var(--red)}
+  input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px 11px;color:var(--text-hi);font-size:14px}
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);font-size:14px}
+  th{color:var(--text-lo);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  .rank{font-weight:800;color:var(--gold);width:30px}
+  .pts{font-weight:800;color:var(--red);text-align:right}
+  .muted{color:var(--text-lo);font-size:13px}
+  .pill{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:999px;padding:2px 8px;font-size:11px;color:var(--text-lo);font-weight:700}
+  .leader{outline:2px solid var(--gold);outline-offset:-2px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .teamtab{padding:6px 12px;border-radius:999px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-weight:700;font-size:13px}
+  .teamtab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+  .search{margin-bottom:10px}
+  .note{background:rgba(245,196,81,.12);border:1px solid var(--gold);color:#f5d98a;padding:9px 12px;border-radius:9px;font-size:12.5px;margin-bottom:16px}
+  .full{opacity:.5}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="brand">🦬 Family <span>Fantasy</span></div>
+  <div class="spacer"></div>
+  <div class="who">GO BILLS!</div>
+</nav>
+<div class="wrap">
+  <h1>Family Fantasy Football 🦬</h1>
+  <div class="go">GO BILLS!</div>
+  <p class="sub">Add everyone in the family as a team, draft real NFL players (nobody can share a player),
+     and the standings tell you who's winning. Everything saves on this device.</p>
+
+  <div class="note">📋 Live browser demo on GitHub Pages using 2024 season points. The full version
+     (shared logins so Hugo &amp; Max play from different phones) runs on a real server — that's the Render step.</div>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <h2>Teams</h2>
+        <div id="teamtabs" class="row" style="margin-bottom:12px"></div>
+        <div class="row">
+          <input id="newteam" placeholder="Add a team (e.g. Hugo's Bills)" />
+          <button class="btn" onclick="addTeam()">Add</button>
+        </div>
+        <p class="muted" style="margin-top:8px">Drafting for: <strong id="activeName">—</strong></p>
+      </div>
+
+      <div class="card">
+        <h2>🏆 Standings</h2>
+        <table id="standings"></table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Player board <span class="muted" id="poolcount"></span></h2>
+      <input class="search" id="search" placeholder="Search a player…" oninput="renderPool()" />
+      <table id="pool"></table>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- mocked top-40 players by ~2024 PPR fantasy points (demo data) ----
+const POOL = [
+ ["Lamar Jackson","QB","BAL",434.0],["Josh Allen","QB","BUF",410.5],["Jalen Hurts","QB","PHI",352.9],
+ ["Joe Burrow","QB","CIN",381.8],["Jared Goff","QB","DET",330.1],["Baker Mayfield","QB","TB",362.4],
+ ["Saquon Barkley","RB","PHI",373.0],["Jahmyr Gibbs","RB","DET",331.5],["Derrick Henry","RB","BAL",315.2],
+ ["Bijan Robinson","RB","ATL",304.9],["De'Von Achane","RB","MIA",283.1],["James Cook","RB","BUF",238.1],
+ ["Ja'Marr Chase","WR","CIN",403.7],["Justin Jefferson","WR","MIN",301.2],["Amon-Ra St. Brown","WR","DET",330.7],
+ ["Puka Nacua","WR","LAR",244.6],["Brian Thomas Jr.","WR","JAX",268.9],["Terry McLaurin","WR","WAS",261.4],
+ ["Malik Nabers","WR","NYG",258.2],["Drake London","WR","ATL",253.7],["Nico Collins","WR","HOU",228.0],
+ ["A.J. Brown","WR","PHI",219.4],["CeeDee Lamb","WR","DAL",261.9],["Mike Evans","WR","TB",231.3],
+ ["George Kittle","TE","SF",229.6],["Trey McBride","TE","ARI",254.1],["Brock Bowers","TE","LV",261.5],
+ ["Travis Kelce","TE","KC",188.4],["Sam LaPorta","TE","DET",162.0],
+ ["Kyren Williams","RB","LAR",283.4],["Josh Jacobs","RB","GB",289.6],["Chase Brown","RB","CIN",258.3],
+ ["Bucky Irving","RB","TB",258.0],["Joe Mixon","RB","HOU",249.5],["Jonathan Taylor","RB","IND",239.1],
+ ["Jayden Daniels","QB","WAS",371.2],["Patrick Mahomes","QB","KC",312.7],["Bo Nix","QB","DEN",336.5],
+ ["Davante Adams","WR","NYJ",233.8],["Courtland Sutton","WR","DEN",229.0],
+].map((p,i)=>({id:"p"+i,name:p[0],pos:p[1],team:p[2],pts:p[3]}));
+
+const LIMIT=8;
+const KEY="ffl_demo_v1";
+let state = load() || {teams:[], active:null};
+
+function load(){ try{return JSON.parse(localStorage.getItem(KEY));}catch(e){return null;} }
+function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
+
+function addTeam(){
+  const el=document.getElementById("newteam");
+  const name=(el.value||"").trim();
+  if(!name) return;
+  const id="t"+Date.now();
+  state.teams.push({id,name,roster:[]});
+  state.active=id; el.value="";
+  save(); renderAll();
+}
+function setActive(id){ state.active=id; save(); renderAll(); }
+
+function takenSet(){ const s=new Set(); state.teams.forEach(t=>t.roster.forEach(pid=>s.add(pid))); return s; }
+function activeTeam(){ return state.teams.find(t=>t.id===state.active); }
+
+function draft(pid){
+  const t=activeTeam();
+  if(!t){ alert("Add a team first!"); return; }
+  if(t.roster.length>=LIMIT){ alert("That team's roster is full ("+LIMIT+")."); return; }
+  if(takenSet().has(pid)){ alert("That player is already taken in this league."); return; }
+  t.roster.push(pid); save(); renderAll();
+}
+function drop(pid){ const t=activeTeam(); if(!t)return; t.roster=t.roster.filter(x=>x!==pid); save(); renderAll(); }
+function byId(pid){ return POOL.find(p=>p.id===pid); }
+
+function renderTabs(){
+  const c=document.getElementById("teamtabs");
+  if(!state.teams.length){ c.innerHTML='<span class="muted">No teams yet — add one below.</span>'; }
+  else c.innerHTML = state.teams.map(t=>
+    `<span class="teamtab ${t.id===state.active?'active':''}" onclick="setActive('${t.id}')">${esc(t.name)}</span>`).join("");
+  const a=activeTeam();
+  document.getElementById("activeName").textContent = a? a.name+" ("+a.roster.length+"/"+LIMIT+")" : "—";
+}
+
+function renderStandings(){
+  const rows = state.teams.map(t=>{
+    const total = t.roster.reduce((s,pid)=>s+(byId(pid)?.pts||0),0);
+    return {t, total};
+  }).sort((a,b)=>b.total-a.total);
+  const el=document.getElementById("standings");
+  if(!rows.length){ el.innerHTML='<tr><td class="muted">Add teams and draft players to see standings.</td></tr>'; return; }
+  let h='<tr><th class="rank">#</th><th>Team</th><th>Players</th><th class="pts">Points</th></tr>';
+  rows.forEach((r,i)=>{
+    const lead = i===0 && r.total>0;
+    h+=`<tr class="${lead?'leader':''}"><td class="rank">${i+1}</td>`+
+       `<td><strong>${esc(r.t.name)}</strong> ${lead?'<span class="pill" style="color:var(--gold)">Leader</span>':''}</td>`+
+       `<td class="muted">${r.t.roster.length}/${LIMIT}</td>`+
+       `<td class="pts">${r.total.toFixed(1)}</td></tr>`;
+    r.t.roster.forEach(pid=>{const p=byId(pid); if(!p)return;
+      h+=`<tr><td></td><td class="muted">${esc(p.name)} <span class="pill">${p.pos}</span> ${p.team}</td>`+
+         `<td></td><td class="pts" style="color:var(--text-lo);font-weight:600">${p.pts.toFixed(1)} `+
+         `<button class="btn small ghost" onclick="drop('${pid}')">✕</button></td></tr>`;
+    });
+  });
+  el.innerHTML=h;
+}
+
+function renderPool(){
+  const q=(document.getElementById("search").value||"").toLowerCase();
+  const taken=takenSet();
+  const t=activeTeam();
+  const full = t && t.roster.length>=LIMIT;
+  const list=POOL.slice().sort((a,b)=>b.pts-a.pts).filter(p=>!q||p.name.toLowerCase().includes(q));
+  document.getElementById("poolcount").textContent="· "+POOL.length+" players (2024 pts)";
+  let h='<tr><th>Player</th><th>Pos</th><th>NFL</th><th class="pts">Pts</th><th></th></tr>';
+  list.forEach(p=>{
+    const isTaken=taken.has(p.id);
+    let act;
+    if(isTaken) act='<span class="pill">Taken</span>';
+    else if(full) act='<span class="muted">Full</span>';
+    else act=`<button class="btn small" onclick="draft('${p.id}')">Draft</button>`;
+    h+=`<tr class="${isTaken?'full':''}"><td>${esc(p.name)}</td><td><span class="pill">${p.pos}</span></td>`+
+       `<td class="muted">${p.team}</td><td class="pts">${p.pts.toFixed(1)}</td><td>${act}</td></tr>`;
+  });
+  document.getElementById("pool").innerHTML=h;
+}
+
+function esc(s){return (s+"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function renderAll(){ renderTabs(); renderStandings(); renderPool(); }
+
+// seed two teams the first time so it's not empty
+if(!state.teams.length){
+  state.teams=[{id:"t1",name:"Hugo's Bills",roster:[]},{id:"t2",name:"Max Attack",roster:[]}];
+  state.active="t1"; save();
+}
+renderAll();
+</script>
+</body>
+</html>
