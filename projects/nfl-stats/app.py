@@ -67,7 +67,27 @@ ESPN_SCOREBOARD_URL = (
 )
 
 CACHE_TTL = 6 * 3600  # 6 hours
-ROSTER_LIMIT = 8      # players each team may draft
+ROSTER_LIMIT = 8      # players each team may draft (4 starters + 4 backups)
+
+# Lineup: one STARTER and one BACKUP for each of these positions. The backup
+# only scores when its starter is marked injured (a one-tap sub-in).
+LINEUP_POSITIONS = ["QB", "RB", "WR", "TE"]
+LINEUP_LABELS = {"QB": "Quarterback", "RB": "Running Back",
+                 "WR": "Wide Receiver", "TE": "Tight End"}
+
+
+def lineup_pos_for(position):
+    """Map a raw NFL position onto one of the four lineup slots (or None)."""
+    p = (position or "").upper().strip()
+    if p == "QB":
+        return "QB"
+    if p in ("RB", "FB", "HB"):
+        return "RB"
+    if p == "WR":
+        return "WR"
+    if p == "TE":
+        return "TE"
+    return None
 
 # Latest season/week that has real, completed stats in the data source.
 # Everything at or before this is HISTORICAL; a later live season is LIVE only
@@ -145,9 +165,32 @@ def close_db(exc):
         db.close()
 
 
+def _ensure_column(con, table, col, decl):
+    cols = [r[1] for r in con.execute(f"PRAGMA table_info({table})").fetchall()]
+    if col not in cols:
+        con.execute(f"ALTER TABLE {table} ADD COLUMN {col} {decl}")
+
+
 def init_db():
     con = sqlite3.connect(DB_PATH)
     con.executescript(SCHEMA)
+    # --- migrations: lineup slots + injury flag on roster ---
+    _ensure_column(con, "roster", "lineup_pos", "TEXT")
+    _ensure_column(con, "roster", "role", "INTEGER")       # 1 = starter, 2 = backup
+    _ensure_column(con, "roster", "injured", "INTEGER DEFAULT 0")
+    # Backfill any pre-existing rows that predate the lineup model.
+    con.row_factory = sqlite3.Row
+    unslotted = con.execute(
+        "SELECT id, membership_id, position FROM roster WHERE role IS NULL ORDER BY membership_id, created"
+    ).fetchall()
+    counters = {}
+    for r in unslotted:
+        lp = lineup_pos_for(r["position"]) or "RB"
+        key = (r["membership_id"], lp)
+        n = counters.get(key, 0) + 1
+        counters[key] = n
+        con.execute("UPDATE roster SET lineup_pos=?, role=?, injured=0 WHERE id=?",
+                    (lp, n, r["id"]))
     con.commit()
     con.close()
 
@@ -507,20 +550,53 @@ def compute_standings(league_id: int, season: int):
         roster = db.execute(
             "SELECT * FROM roster WHERE membership_id=? ORDER BY created", (m["id"],)
         ).fetchall()
-        total = 0.0
+
+        def entry(p):
+            return {
+                "player_id": p["player_id"],
+                "name": p["player_name"],
+                "position": p["position"],
+                "nfl_team": p["nfl_team"],
+                "role": p["role"],
+                "injured": bool(p["injured"]),
+                "points": round(float(scores.get(p["player_id"], 0.0)), 1),
+            }
+
+        by_pos = {}  # lineup_pos -> {1: starter, 2: backup}
         players = []
         for p in roster:
-            pts = float(scores.get(p["player_id"], 0.0))
-            total += pts
-            players.append(
-                {
-                    "player_id": p["player_id"],
-                    "name": p["player_name"],
-                    "position": p["position"],
-                    "nfl_team": p["nfl_team"],
-                    "points": round(pts, 1),
-                }
-            )
+            e = entry(p)
+            players.append(e)
+            lp = p["lineup_pos"] or lineup_pos_for(p["position"]) or "RB"
+            by_pos.setdefault(lp, {})[p["role"] or 1] = e
+
+        total = 0.0
+        lineup = []
+        for lp in LINEUP_POSITIONS:
+            slot = by_pos.get(lp, {})
+            starter = slot.get(1)
+            backup = slot.get(2)
+            # Active scorer: starter unless injured (then the backup subs in).
+            if starter and not starter["injured"]:
+                active_role = 1
+            elif backup:
+                active_role = 2
+            elif starter:
+                active_role = 1
+            else:
+                active_role = None
+            active = starter if active_role == 1 else (backup if active_role == 2 else None)
+            if active:
+                total += active["points"]
+            lineup.append({
+                "lineup_pos": lp,
+                "label": LINEUP_LABELS[lp],
+                "starter": starter,
+                "backup": backup,
+                "active_role": active_role,
+                "active_points": round(active["points"], 1) if active else 0.0,
+            })
+
         uname = db.execute("SELECT username FROM users WHERE id=?", (m["user_id"],)).fetchone()
         standings.append(
             {
@@ -530,6 +606,7 @@ def compute_standings(league_id: int, season: int):
                 "team_name": m["team_name"],
                 "total": round(total, 1),
                 "players": players,
+                "lineup": lineup,
                 "slots_left": ROSTER_LIMIT - len(players),
             }
         )
@@ -643,29 +720,81 @@ def api_draft():
     if not membership:
         return jsonify({"ok": False, "error": "You are not in this league."}), 403
 
-    count = db.execute(
-        "SELECT COUNT(*) AS c FROM roster WHERE membership_id=?", (membership["id"],)
-    ).fetchone()["c"]
-    if count >= ROSTER_LIMIT:
-        return jsonify({"ok": False, "error": f"Your roster is full ({ROSTER_LIMIT})."}), 400
-
     season = int(data.get("season", 2024))
     pool = {p["player_id"]: p for p in season_player_pool(season)}
     p = pool.get(player_id)
     if not p:
         return jsonify({"ok": False, "error": "Unknown player."}), 400
+
+    # Which lineup slot does this player fill?
+    lp = lineup_pos_for(p["position"])
+    if lp is None:
+        return jsonify({"ok": False, "error":
+            f"{p['name']} plays {p['position'] or 'a position'} that isn't used in your lineup. "
+            f"Draft a QB, RB, WR, or TE."}), 400
+
+    # Find the open role for this position: starter (1) first, then backup (2).
+    rows = db.execute(
+        "SELECT role FROM roster WHERE membership_id=? AND lineup_pos=?",
+        (membership["id"], lp),
+    ).fetchall()
+    roles = {r["role"] for r in rows}
+    if 1 not in roles:
+        role = 1
+    elif 2 not in roles:
+        role = 2
+    else:
+        return jsonify({"ok": False, "error":
+            f"You already have a {lp} starter and backup. Drop one first."}), 400
+
     try:
         db.execute(
             """INSERT INTO roster(membership_id, league_id, player_id, player_name,
-                                  position, nfl_team, created)
-               VALUES (?,?,?,?,?,?,?)""",
+                                  position, nfl_team, created, lineup_pos, role, injured)
+               VALUES (?,?,?,?,?,?,?,?,?,0)""",
             (membership["id"], league["id"], player_id, p["name"],
-             p["position"], p["nfl_team"], time.time()),
+             p["position"], p["nfl_team"], time.time(), lp, role),
         )
         db.commit()
     except sqlite3.IntegrityError:
         return jsonify({"ok": False, "error": "That player is already taken in this league."}), 400
-    return jsonify({"ok": True, "player": p})
+    out = dict(p)
+    out["lineup_pos"] = lp
+    out["role"] = role
+    return jsonify({"ok": True, "player": out})
+
+
+@app.route("/api/injury", methods=["POST"])
+def api_injury():
+    """Toggle a starter's injured flag — subs the backup in/out for scoring."""
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "Please log in."}), 401
+    data = request.get_json(force=True, silent=True) or {}
+    code = data.get("league")
+    player_id = str(data.get("player_id") or "")
+    db = get_db()
+    league = db.execute("SELECT * FROM leagues WHERE code=?", (code,)).fetchone()
+    if not league:
+        return jsonify({"ok": False, "error": "League not found."}), 404
+    membership = db.execute(
+        "SELECT * FROM memberships WHERE league_id=? AND user_id=?",
+        (league["id"], user["id"]),
+    ).fetchone()
+    if not membership:
+        return jsonify({"ok": False, "error": "You are not in this league."}), 403
+    row = db.execute(
+        "SELECT * FROM roster WHERE membership_id=? AND player_id=?",
+        (membership["id"], player_id),
+    ).fetchone()
+    if not row:
+        return jsonify({"ok": False, "error": "Player not on your team."}), 404
+    if (row["role"] or 1) != 1:
+        return jsonify({"ok": False, "error": "Only starters can be marked injured."}), 400
+    new_val = 0 if row["injured"] else 1
+    db.execute("UPDATE roster SET injured=? WHERE id=?", (new_val, row["id"]))
+    db.commit()
+    return jsonify({"ok": True, "injured": bool(new_val)})
 
 
 @app.route("/api/drop", methods=["POST"])

@@ -8,7 +8,28 @@
           background:var(--surface2);border:2px solid var(--border)}
   .d-shot-blank{display:flex;align-items:center;justify-content:center;font-size:17px}
   .d-name{font-weight:800}
-  #pool td,#myroster td{padding-top:8px;padding-bottom:8px}
+  #pool td{padding-top:8px;padding-bottom:8px}
+
+  /* Starter + backup lineup */
+  .lineup{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:12px}
+  @media (max-width:640px){.lineup{grid-template-columns:1fr}}
+  .pos-block{border:2px solid var(--border);border-radius:14px;overflow:hidden;background:var(--surface)}
+  .pos-title{background:var(--surface2);padding:8px 14px;font-weight:900;color:var(--bills-blue);
+             font-size:15px;border-bottom:2px solid var(--border)}
+  .slot{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)}
+  .slot:last-child{border-bottom:none}
+  .slot-tag{font-size:11px;font-weight:900;letter-spacing:.04em;padding:3px 8px;border-radius:8px;flex-shrink:0}
+  .tag-starter{background:#DCFCE7;color:#14532D}
+  .tag-backup{background:#EAF0F9;color:#1D3A75}
+  .slot .s-name{font-weight:800;flex:1;min-width:0}
+  .slot.empty .s-name{color:var(--text-lo);font-weight:600}
+  .slot.subbed .slot-tag.tag-backup{background:#15803D;color:#fff}
+  .slot.injured-row{background:#FDECEC}
+  .s-team{color:var(--text-lo);font-size:13px}
+  .s-actions{display:flex;gap:6px;flex-shrink:0}
+  .active-dot{font-size:11px;font-weight:900;color:#15803D;white-space:nowrap}
+  .btn.injury{background:#fff;border:2px solid #E1A600;color:#8a5a00;box-shadow:none;padding:5px 10px;font-size:13px}
+  .btn.injury.on{background:#C60C30;border-color:#C60C30;color:#fff}
 </style>
 {% endblock %}
 {% block content %}
@@ -32,18 +53,9 @@
     <div class="row" style="justify-content:space-between">
       <h2 style="margin:0">My roster (<span id="rostercount">{{ my_roster|length }}</span>/{{ roster_limit }})</h2>
     </div>
-    <table id="myroster" style="margin-top:10px">
-      <tr><th>Player</th><th>Pos</th><th>NFL</th><th></th></tr>
-      {% for p in my_roster %}
-      <tr data-pid="{{ p['player_id'] }}">
-        <td>{{ p['player_name'] }}</td><td><span class="pill">{{ p['position'] }}</span></td>
-        <td class="muted">{{ p['nfl_team'] }}</td>
-        <td><button class="btn small ghost" onclick="dropPlayer('{{ p['player_id'] }}')">Drop</button></td>
-      </tr>
-      {% endfor %}
-    </table>
-    <p id="rosterempty" class="muted" style="margin-top:8px;{{ 'display:none' if my_roster else '' }}">
-      No players yet — pick from the board below.</p>
+    <p class="muted" style="margin-top:6px">Each position has a <strong>starter</strong> and a <strong>backup</strong>.
+       If your starter gets hurt, tap <strong>🤕 Injured</strong> and your backup scores instead.</p>
+    <div id="lineup" class="lineup"></div>
   </div>
 
   <div class="card">
@@ -80,7 +92,68 @@
       NYG:'giants new york',NYJ:'jets new york',PHI:'eagles philadelphia',PIT:'steelers pittsburgh',
       SF:'49ers san francisco niners',SEA:'seahawks seattle',TB:'buccaneers bucs tampa bay',
       TEN:'titans tennessee',WAS:'commanders washington'};
-    let mine  = new Set([{% for p in my_roster %}{{ p['player_id']|tojson }}{{ ',' if not loop.last }}{% endfor %}]);
+    const LINEUP_POS = ['QB','RB','WR','TE'];
+    const POS_LABEL = {QB:'Quarterback',RB:'Running Back',WR:'Wide Receiver',TE:'Tight End'};
+    // ROSTER[pos] = {1:starterPlayer, 2:backupPlayer}
+    const ROSTER = {};
+    let mine = new Set();
+    function addToRoster(p){
+      const lp = p.lineup_pos; if(!lp) return;
+      (ROSTER[lp] = ROSTER[lp] || {})[p.role] = p;
+      mine.add(p.player_id);
+    }
+    (function initRoster(){
+      const init = [
+        {% for p in my_roster %}
+        {player_id:{{ p['player_id']|tojson }}, name:{{ p['player_name']|tojson }},
+         position:{{ p['position']|tojson }}, nfl_team:{{ (p['nfl_team'] or '')|tojson }},
+         lineup_pos:{{ (p['lineup_pos'] or '')|tojson }}, role:{{ p['role'] or 1 }},
+         injured:{{ 1 if p['injured'] else 0 }}}{{ ',' if not loop.last }}
+        {% endfor %}
+      ];
+      init.forEach(addToRoster);
+    })();
+
+    function slotHTML(pos, role){
+      const p = (ROSTER[pos]||{})[role];
+      const isStarter = role === 1;
+      const tag = isStarter ? '<span class="slot-tag tag-starter">STARTER</span>'
+                            : '<span class="slot-tag tag-backup">BACKUP</span>';
+      if(!p){
+        return `<div class="slot empty">${tag}<span class="s-name">Draft a ${pos} ${isStarter?'starter':'backup'}…</span></div>`;
+      }
+      const starter = (ROSTER[pos]||{})[1];
+      const starterOut = starter && starter.injured;
+      // Who actually scores for this position?
+      const backupScoring = starterOut && role === 2;
+      const starterScoring = role === 1 && !starterOut;
+      let indicator = '';
+      if(starterScoring) indicator = '<span class="active-dot">▶ scoring</span>';
+      else if(backupScoring) indicator = '<span class="active-dot">▶ scoring (subbed in)</span>';
+      else if(role===2) indicator = '<span class="s-team">🪑 bench</span>';
+      let injuryBtn = '';
+      if(isStarter){
+        injuryBtn = p.injured
+          ? `<button class="btn small injury on" onclick="toggleInjury('${p.player_id}')">🤕 Injured</button>`
+          : `<button class="btn small injury" onclick="toggleInjury('${p.player_id}')">✅ Healthy</button>`;
+      }
+      const cls = 'slot' + (backupScoring?' subbed':'') + (isStarter && p.injured?' injured-row':'');
+      return `<div class="${cls}">${tag}
+        <span class="s-name">${p.name} <span class="s-team">${p.nfl_team||''}</span></span>
+        ${indicator}
+        <span class="s-actions">${injuryBtn}
+          <button class="btn small ghost" onclick="dropPlayer('${p.player_id}')">Drop</button></span></div>`;
+    }
+
+    function renderLineup(){
+      const box = document.getElementById('lineup');
+      box.innerHTML = LINEUP_POS.map(pos => `
+        <div class="pos-block">
+          <div class="pos-title">${POS_LABEL[pos]}</div>
+          ${slotHTML(pos,1)}
+          ${slotHTML(pos,2)}
+        </div>`).join('');
+    }
 
     async function loadPool(){
       const r = await fetch(`/api/pool?season=${SEASON}&league=${encodeURIComponent(LEAGUE)}`);
@@ -130,9 +203,10 @@
         body:JSON.stringify({league:LEAGUE, player_id:pid, season:SEASON})});
       const j = await r.json();
       if(!j.ok){ alert(j.error||'Could not draft.'); return; }
-      mine.add(pid); taken.add(pid);
-      addRosterRow(j.player);
-      updateCount(); renderPool();
+      taken.add(pid);
+      addToRoster(j.player);   // has lineup_pos + role + injured:0
+      j.player.injured = 0;
+      updateCount(); renderLineup(); renderPool();
     }
 
     async function dropPlayer(pid){
@@ -141,26 +215,31 @@
       const j = await r.json();
       if(!j.ok){ alert(j.error||'Could not drop.'); return; }
       mine.delete(pid); taken.delete(pid);
-      const row = document.querySelector(`#myroster tr[data-pid="${pid}"]`);
-      if(row) row.remove();
-      updateCount(); renderPool();
+      for(const pos of LINEUP_POS){
+        for(const role of [1,2]){
+          if(ROSTER[pos] && ROSTER[pos][role] && ROSTER[pos][role].player_id===pid) delete ROSTER[pos][role];
+        }
+      }
+      updateCount(); renderLineup(); renderPool();
     }
 
-    function addRosterRow(p){
-      const t = document.getElementById('myroster');
-      const tr = document.createElement('tr');
-      tr.setAttribute('data-pid', p.player_id);
-      tr.innerHTML = `<td>${p.name}</td><td><span class="pill">${p.position||''}</span></td>`+
-        `<td class="muted">${p.nfl_team||''}</td>`+
-        `<td><button class="btn small ghost" onclick="dropPlayer('${p.player_id}')">Drop</button></td>`;
-      t.appendChild(tr);
+    async function toggleInjury(pid){
+      const r = await fetch('/api/injury', {method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({league:LEAGUE, player_id:pid})});
+      const j = await r.json();
+      if(!j.ok){ alert(j.error||'Could not update.'); return; }
+      for(const pos of LINEUP_POS){
+        const s = ROSTER[pos] && ROSTER[pos][1];
+        if(s && s.player_id===pid) s.injured = j.injured ? 1 : 0;
+      }
+      renderLineup();
     }
 
     function updateCount(){
       document.getElementById('rostercount').textContent = mine.size;
-      document.getElementById('rosterempty').style.display = mine.size ? 'none' : '';
     }
 
+    renderLineup();
     loadPool();
   </script>
 {% endblock %}

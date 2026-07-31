@@ -1,5 +1,15 @@
 {% extends "base.html" %}
 {% block title %}{{ league['name'] }} · Standings{% endblock %}
+{% block head %}
+<style>
+  .lineup-table tr.active-scorer td{background:#E9F8EF}
+  .slot-role{font-size:11px;font-weight:900;margin-left:6px;padding:2px 7px;border-radius:7px}
+  .role-starter{background:#DCFCE7;color:#14532D}
+  .role-backup{background:#EAF0F9;color:#1D3A75}
+  .scoring{color:#15803D;font-weight:900;font-size:13px;margin-left:8px;white-space:nowrap}
+  .hurt{color:#C60C30;font-weight:900;font-size:13px;margin-left:8px;white-space:nowrap}
+</style>
+{% endblock %}
 {% block content %}
   <div class="row" style="justify-content:space-between;align-items:flex-start">
     <div>
@@ -66,11 +76,29 @@
         <h2 style="margin:0">{{ s['team_name'] }}</h2>
         <span class="pts">{{ s['total'] }} pts</span>
       </div>
-      <table style="margin-top:10px">
-        <tr><th>Player</th><th>Pos</th><th>NFL</th><th class="pts">Pts</th></tr>
-        {% for p in s['players'] %}
-        <tr><td>{{ p['name'] }}</td><td><span class="pill">{{ p['position'] }}</span></td>
-            <td class="muted">{{ p['nfl_team'] }}</td><td class="pts">{{ p['points'] }}</td></tr>
+      <p class="muted" style="margin-top:4px">Starter scores each week · backup subs in when the starter is 🤕 injured.</p>
+      <table style="margin-top:10px" class="lineup-table">
+        <tr><th>Slot</th><th>Player</th><th>NFL</th><th class="pts">Pts</th></tr>
+        {% for row in s['lineup'] %}
+          {% for role, tag in [(1, 'Starter'), (2, 'Backup')] %}
+            {% set pl = row['starter'] if role == 1 else row['backup'] %}
+            {% set is_active = row['active_role'] == role %}
+            <tr class="{{ 'active-scorer' if is_active and pl else '' }}">
+              <td>
+                <span class="pill">{{ row['lineup_pos'] }}</span>
+                <span class="slot-role {{ 'role-starter' if role==1 else 'role-backup' }}">{{ tag }}</span>
+              </td>
+              {% if pl %}
+                <td>{{ pl['name'] }}
+                    {% if role == 1 and pl['injured'] %}<span class="hurt">🤕 out</span>{% endif %}
+                    {% if is_active %}<span class="scoring">▶ scoring</span>{% endif %}</td>
+                <td class="muted">{{ pl['nfl_team'] }}</td>
+                <td class="pts">{{ pl['points'] }}</td>
+              {% else %}
+                <td class="muted" colspan="3">— empty —</td>
+              {% endif %}
+            </tr>
+          {% endfor %}
         {% endfor %}
       </table>
     </div>
