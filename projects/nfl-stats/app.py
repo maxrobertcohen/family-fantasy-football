@@ -832,6 +832,18 @@ def stats_page():
     return render_template("stats.html", user=current_user())
 
 
+@app.route("/leaderboard")
+def leaderboard_page():
+    status = data_status()
+    season = int(request.args.get("season", status["data_season"]))
+    return render_template(
+        "leaderboard.html",
+        user=current_user(),
+        season=season,
+        data_mode=season_descriptor(season, status),
+    )
+
+
 @app.route("/api/data-status")
 def api_data_status():
     return jsonify(data_status())

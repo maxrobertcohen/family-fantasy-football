@@ -136,9 +136,11 @@
     <div class="spacer"></div>
     {% if user %}
       <a class="link" href="/dashboard">My Leagues</a>
+      <a class="link" href="/leaderboard">🏆 Leaderboard</a>
       <a class="link" href="/stats">NFL Stats</a>
       <a class="link" href="/logout">Log out ({{ user['username'] }})</a>
     {% else %}
+      <a class="link" href="/leaderboard">🏆 Leaderboard</a>
       <a class="link" href="/stats">NFL Stats</a>
       <a class="link" href="/login">Log in</a>
       <a class="btn small green" href="/register">Sign up</a>
