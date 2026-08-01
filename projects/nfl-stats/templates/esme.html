@@ -80,6 +80,22 @@
       font-family:'Courier New',monospace;font-size:12px;padding:4px 8px;margin:4px}
     .sparkle{position:fixed;top:-5vh;font-size:22px;pointer-events:none;z-index:5;
       animation:fall linear infinite}
+    /* shooting stars that streak across at random intervals */
+    .shooting-star{position:fixed;font-size:38px;z-index:9;pointer-events:none;
+      filter:drop-shadow(0 0 8px #fff);animation:shoot linear forwards}
+    @keyframes shoot{
+      0%{opacity:0;transform:translate(0,0) rotate(var(--r,20deg)) scale(.5)}
+      8%{opacity:1}
+      100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--r,20deg)) scale(1.15)}}
+    /* unicorn parade + stampede */
+    .parade img{height:90px;margin:0 14px;vertical-align:middle;
+      filter:drop-shadow(0 0 8px #ff66ff)}
+    .stampede{font-size:44px;line-height:1.1}
+    .stampede span{display:inline-block;animation:bounce 1.1s ease-in-out infinite}
+    .stampede span:nth-child(2n){animation-delay:.15s}
+    .stampede span:nth-child(3n){animation-delay:.35s}
+    .stampede span:nth-child(4n){animation-delay:.55s}
+    .globe{width:70px;vertical-align:middle;margin:0 8px}
     h2.section{font-size:30px;margin:6px 0;-webkit-text-stroke:1px #000;
       animation:rainbowText 5s linear infinite}
     .guestlog{background:#000;color:#0f0;text-align:left;font-family:'Courier New',monospace;
@@ -112,16 +128,40 @@
     <div class="panel">
       <h2 class="section">🦄 UNICORN ZONE 🦄</h2>
       <p style="font-size:19px">welcome 2 my unicorn collection!!! aren't they so pretty?? ✨✨✨</p>
+
+      <!-- unicorn parade scrolls the whole herd across -->
+      <marquee class="parade" scrollamount="7" behavior="scroll" style="margin:6px 0">
+        <img src="/static/esme/Drifting_unicorn.gif" alt="unicorn" />
+        <img src="/static/esme/Unicorn.gif" alt="unicorn" style="background:#fff;border-radius:8px" />
+        <img src="/static/esme/Unicorn_Pukes_Rainbow_normal_select.gif" alt="unicorn" />
+        <img src="/static/esme/Drifting_unicorn.gif" alt="unicorn" style="transform:scaleX(-1)" />
+        <img src="/static/esme/Unicorn.gif" alt="unicorn" style="background:#fff;border-radius:8px" />
+        <img src="/static/esme/Unicorn_Pukes_Rainbow_normal_select.gif" alt="unicorn" />
+      </marquee>
+
       <img class="drift" src="/static/esme/Drifting_unicorn.gif" alt="drifting unicorn" />
       <img class="drift" src="/static/esme/Unicorn.gif" alt="unicorn"
            style="background:#fff;border-radius:8px" />
-      <div style="margin-top:8px">
-        <img src="/static/esme/Unicorn_Pukes_Rainbow_normal_select.gif" alt="rainbow unicorn"
-             style="width:120px" />
+
+      <div class="stampede" style="margin-top:8px">
+        <span>🦄</span><span>🦄</span><span>🦄</span><span>🦄</span><span>🦄</span>
+        <span>🦄</span><span>🦄</span><span>🦄</span><span>🦄</span><span>🦄</span>
       </div>
+
+      <div style="margin-top:8px">
+        <img src="/static/esme/Unicorn_Pukes_Rainbow_normal_select.gif" alt="rainbow unicorn" style="width:150px" />
+        <img src="/static/esme/Unicorn.gif" alt="unicorn" style="width:150px;background:#fff;border-radius:8px" />
+        <img src="/static/esme/Unicorn_Pukes_Rainbow_normal_select.gif" alt="rainbow unicorn" style="width:150px;transform:scaleX(-1)" />
+      </div>
+
       <marquee scrollamount="9" style="color:#00ffcc;margin-top:6px">
         🦄 unicorns r the best animal EVER and no1 can tell me different 🦄 rainbows 4 lyfe 🌈
       </marquee>
+      <p style="font-size:15px;margin-top:6px">
+        <img class="globe" src="/static/esme/Rotating_earth_(large).gif" alt="spinning globe" />
+        a whole WORLD of unicorns 🌍✨
+        <img class="globe" src="/static/esme/Rotating_earth_(large).gif" alt="spinning globe" />
+      </p>
     </div>
 
     <img class="rainbow-rule" src="/static/esme/Animated_rainbow_rule_fast_reverse.gif" alt="rainbow" />
@@ -243,6 +283,36 @@
       s.style.animationDelay = (-(i%8))+'s';
       g.appendChild(s);
     }
+
+    // ⭐ shooting stars that streak across at random, unpredictable intervals ⭐
+    (function(){
+      var pool = ['🌠','🌠','🌠','⭐','✨','💫','🦄','🌈','⭐','🌠'];
+      function shoot(){
+        var st = document.createElement('div');
+        st.className = 'shooting-star';
+        st.textContent = pool[Math.floor(Math.random()*pool.length)];
+        var fromLeft = Math.random() < 0.5;
+        st.style.top  = (Math.random()*55) + 'vh';
+        st.style.left = fromLeft ? '-8vw' : '108vw';
+        var dist = 115 + Math.random()*30;
+        st.style.setProperty('--dx', (fromLeft ? dist : -dist) + 'vw');
+        st.style.setProperty('--dy', (12 + Math.random()*58) + 'vh');
+        st.style.setProperty('--r',  (fromLeft ? 18 : -18) + 'deg');
+        var dur = 0.9 + Math.random()*1.4;
+        st.style.animationDuration = dur + 's';
+        document.body.appendChild(st);
+        setTimeout(function(){ st.remove(); }, dur*1000 + 200);
+      }
+      function loop(){
+        var wait = 500 + Math.random()*4200;   // unpredictable gaps
+        setTimeout(function(){
+          shoot();
+          if (Math.random() < 0.35) setTimeout(shoot, 150 + Math.random()*450); // sometimes a pair
+          loop();
+        }, wait);
+      }
+      loop();
+    })();
   </script>
 </body>
 </html>
