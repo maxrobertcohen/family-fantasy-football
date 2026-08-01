@@ -148,7 +148,20 @@ CREATE TABLE IF NOT EXISTS roster (
     created       REAL NOT NULL,
     UNIQUE(league_id, player_id)
 );
+CREATE TABLE IF NOT EXISTS guestbook (
+    id      INTEGER PRIMARY KEY AUTOINCREMENT,
+    name    TEXT NOT NULL,
+    message TEXT NOT NULL,
+    created REAL NOT NULL
+);
 """
+
+# Fun starter entries so Esme's guestbook is never empty.
+GUESTBOOK_SEED = [
+    ("xX_rainbow_gurl_Xx", "this page ROCKS 🤘"),
+    ("unicornlvr99", "so many unicorns omg 🦄🦄🦄"),
+    ("hugo", "nice page sis but football is better 🏈"),
+]
 
 
 def get_db():
@@ -191,6 +204,12 @@ def init_db():
         counters[key] = n
         con.execute("UPDATE roster SET lineup_pos=?, role=?, injured=0 WHERE id=?",
                     (lp, n, r["id"]))
+    # Seed the guestbook once so it starts with a few fun entries.
+    if con.execute("SELECT COUNT(*) FROM guestbook").fetchone()[0] == 0:
+        base = time.time() - 3 * 86400
+        for i, (nm, msg) in enumerate(GUESTBOOK_SEED):
+            con.execute("INSERT INTO guestbook(name, message, created) VALUES (?,?,?)",
+                        (nm, msg, base + i))
     con.commit()
     con.close()
 
@@ -876,7 +895,22 @@ def stats_page():
 
 @app.route("/esme")
 def esme_page():
-    return render_template("esme.html", user=current_user())
+    entries = get_db().execute(
+        "SELECT name, message, created FROM guestbook ORDER BY created DESC LIMIT 200"
+    ).fetchall()
+    return render_template("esme.html", user=current_user(), guestbook=entries)
+
+
+@app.route("/esme/sign", methods=["POST"])
+def esme_sign():
+    name = (request.form.get("name") or "").strip()[:40] or "anonymous"
+    message = (request.form.get("message") or "").strip()[:280]
+    if message:  # ignore blank sign-ins
+        db = get_db()
+        db.execute("INSERT INTO guestbook(name, message, created) VALUES (?,?,?)",
+                   (name, message, time.time()))
+        db.commit()
+    return redirect(url_for("esme_page") + "#guestbook")
 
 
 @app.route("/leaderboard")
