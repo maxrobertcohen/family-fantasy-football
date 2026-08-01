@@ -98,6 +98,11 @@
     .globe{width:70px;vertical-align:middle;margin:0 8px}
     .pukewall{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;gap:6px;margin:10px 0}
     .pukewall img{filter:drop-shadow(0 0 5px #ff66ff)}
+    .puke-divider{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;gap:6px;margin:10px 0}
+    .puke-divider img{filter:drop-shadow(0 0 4px #ff66ff)}
+    .puke-inline{width:46px;vertical-align:middle;margin:0 4px;filter:drop-shadow(0 0 4px #ff66ff)}
+    .flying-puke{position:fixed;z-index:8;pointer-events:none;width:58px;
+      filter:drop-shadow(0 0 6px #ff66ff);animation:shoot linear forwards}
     h2.section{font-size:30px;margin:6px 0;-webkit-text-stroke:1px #000;
       animation:rainbowText 5s linear infinite}
     .guestlog{background:#000;color:#0f0;text-align:left;font-family:'Courier New',monospace;
@@ -113,10 +118,20 @@
   <!-- falling glitter -->
   <div id="glitter"></div>
 
+  {% macro pukerow(n=9) %}
+  <div class="puke-divider">
+    {% for i in range(n) %}
+    <img src="/static/esme/Unicorn_Pukes_Rainbow_normal_select.gif" alt="rainbow unicorn"
+         style="width:{{ 40 + (i % 4) * 14 }}px;{{ 'transform:scaleX(-1);' if i % 2 else '' }}" />
+    {% endfor %}
+  </div>
+  {% endmacro %}
+
   <div class="frame">
     <marquee behavior="alternate" scrollamount="12" style="color:#ffff00">
       ⭐💖✨ WELCOME 2 ESME'S PAGE ~ THE MOST MAGICAL PLACE ON THE WWW ✨💖⭐
     </marquee>
+    {{ pukerow(11) }}
 
     <div class="panel">
       <div class="wordart">✨🦄 Esme's Page 🦄✨</div>
@@ -128,9 +143,11 @@
         <span class="uni-emoji">⭐</span><span class="uni-emoji">🦄</span>
       </div>
       <span class="construction">🚧 UNDER KONSTRUCTION 🚧</span>
+      {{ pukerow(9) }}
     </div>
 
     <img class="rainbow-rule" src="/static/esme/Animated_rainbow_rule_fast_reverse.gif" alt="rainbow" />
+    {{ pukerow(11) }}
 
     <div class="panel">
       <h2 class="section">🦄 UNICORN ZONE 🦄</h2>
@@ -178,13 +195,18 @@
     </div>
 
     <img class="rainbow-rule" src="/static/esme/Animated_rainbow_rule_fast_reverse.gif" alt="rainbow" />
+    {{ pukerow(11) }}
 
     <div class="panel" style="border-color:#ff2fb0">
       <h2 class="section">🤘💜 PUNK ROCK GRRRLS 💜🤘</h2>
-      <p style="font-size:19px">the BEST punk bands with AWESOME women singers!!! 🎸🔥</p>
+      <p style="font-size:19px">the BEST punk bands with AWESOME women singers!!!
+        <img class="puke-inline" src="/static/esme/Unicorn_Pukes_Rainbow_normal_select.gif" alt="" />
+        🎸🔥
+        <img class="puke-inline" src="/static/esme/Unicorn_Pukes_Rainbow_normal_select.gif" alt="" style="transform:scaleX(-1)" /></p>
       <marquee scrollamount="8" style="color:#ff66ff">
         ✊ GRRRLS 2 THE FRONT ✊ turn it up LOUD 🔊 girls can rock harder than anyone 🤘🎸💥
       </marquee>
+      {{ pukerow(9) }}
       <div class="band-grid">
         <div class="band-card">
           <div class="band-name">🎸 Joan Jett & the Blackhearts</div>
@@ -251,10 +273,12 @@
     </div>
 
     <img class="rainbow-rule" src="/static/esme/Animated_rainbow_rule_fast_reverse.gif" alt="rainbow" />
+    {{ pukerow(11) }}
 
     <div class="panel" id="guestbook">
       <h2 class="section">📖 Sign My Guestbook!</h2>
       <p style="font-size:16px">leave Esme a message!! everyone can see it 💖</p>
+      {{ pukerow(9) }}
       <form class="gb-form" method="post" action="/esme/sign">
         <input class="gb-input" type="text" name="name" maxlength="40" placeholder="ur name" required />
         <input class="gb-input gb-msg" type="text" name="message" maxlength="280" placeholder="say something nice 4 Esme! 🦄✨" required />
@@ -273,6 +297,7 @@
       <div class="badge">Best viewed in Netscape Navigator 4.0</div>
       <div class="badge">800x600 ✔</div>
       <div class="badge">Made with 💖 on a Tuesday</div>
+      {{ pukerow(11) }}
       <p style="margin-top:12px">
         <a class="retro" href="/">⬅ back 2 Hugo's boring football league</a>
       </p>
@@ -323,6 +348,31 @@
           if (Math.random() < 0.35) setTimeout(shoot, 150 + Math.random()*450); // sometimes a pair
           loop();
         }, wait);
+      }
+      loop();
+    })();
+
+    // 🌈🤮 puking rainbow unicorns fly across too, at random intervals 🤮🌈
+    (function(){
+      function flyPuke(){
+        var im = document.createElement('img');
+        im.className = 'flying-puke';
+        im.src = '/static/esme/Unicorn_Pukes_Rainbow_normal_select.gif';
+        var fromLeft = Math.random() < 0.5;
+        im.style.top  = (Math.random()*80) + 'vh';
+        im.style.left = fromLeft ? '-8vw' : '108vw';
+        var dist = 115 + Math.random()*30;
+        im.style.setProperty('--dx', (fromLeft ? dist : -dist) + 'vw');
+        im.style.setProperty('--dy', (-20 + Math.random()*40) + 'vh');
+        im.style.setProperty('--r', '0deg');
+        if (!fromLeft) im.style.transform = 'scaleX(-1)';
+        var dur = 2.2 + Math.random()*2.5;
+        im.style.animationDuration = dur + 's';
+        document.body.appendChild(im);
+        setTimeout(function(){ im.remove(); }, dur*1000 + 300);
+      }
+      function loop(){
+        setTimeout(function(){ flyPuke(); loop(); }, 1500 + Math.random()*5000);
       }
       loop();
     })();
