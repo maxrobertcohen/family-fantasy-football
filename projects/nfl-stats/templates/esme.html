@@ -65,6 +65,17 @@
     .artist-card:nth-child(3n){animation-delay:.6s;background:#c71585}
     .artist-emoji{font-size:42px;display:block}
     .artist-name{font-size:17px;font-weight:900;margin-top:6px;text-shadow:1px 1px 0 #000}
+    .band-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:10px}
+    .band-card{display:block;width:230px;text-decoration:none;color:#fff;text-align:left;
+      background:#1a0033;border:3px solid #ff2fb0;border-radius:10px;padding:10px 12px;
+      box-shadow:0 0 12px #ff2fb0}
+    .band-card:hover{background:#33005c;box-shadow:0 0 20px #ff66ff;transform:scale(1.03)}
+    .band-name{font-size:19px;font-weight:900;color:#ff66ff;text-shadow:1px 1px 0 #000}
+    .band-singer{font-size:13px;color:#00ffcc;margin:3px 0 8px}
+    .band-links a{display:inline-block;font-size:13px;font-weight:900;text-decoration:none;
+      color:#000;background:#ffdd00;border:2px solid #000;border-radius:6px;padding:2px 8px;margin:2px 4px 0 0}
+    .band-links a.listen{background:#00ff88}
+    .band-links a:hover{filter:brightness(1.1)}
     .badge{display:inline-block;background:#000;color:#0f0;border:2px solid #0f0;
       font-family:'Courier New',monospace;font-size:12px;padding:4px 8px;margin:4px}
     .sparkle{position:fixed;top:-5vh;font-size:22px;pointer-events:none;z-index:5;
@@ -115,18 +126,75 @@
 
     <img class="rainbow-rule" src="/static/esme/Animated_rainbow_rule_fast_reverse.gif" alt="rainbow" />
 
-    <div class="panel">
-      <h2 class="section">🎨 Esme's Fave Artists ⭐</h2>
-      <p style="font-size:18px">the coolest artists in the whole universe (＾▽＾)</p>
-      <div>
-        <div class="artist-card"><span class="artist-emoji">🎤</span><div class="artist-name">Pop Star #1</div></div>
-        <div class="artist-card"><span class="artist-emoji">🎸</span><div class="artist-name">Rock Legend</div></div>
-        <div class="artist-card"><span class="artist-emoji">🎹</span><div class="artist-name">Piano Genius</div></div>
-        <div class="artist-card"><span class="artist-emoji">🎨</span><div class="artist-name">Paint Master</div></div>
-        <div class="artist-card"><span class="artist-emoji">🎻</span><div class="artist-name">Violin Hero</div></div>
-        <div class="artist-card"><span class="artist-emoji">🎧</span><div class="artist-name">DJ Sparkle</div></div>
+    <div class="panel" style="border-color:#ff2fb0">
+      <h2 class="section">🤘💜 PUNK ROCK GRRRLS 💜🤘</h2>
+      <p style="font-size:19px">the BEST punk bands with AWESOME women singers!!! 🎸🔥</p>
+      <marquee scrollamount="8" style="color:#ff66ff">
+        ✊ GRRRLS 2 THE FRONT ✊ turn it up LOUD 🔊 girls can rock harder than anyone 🤘🎸💥
+      </marquee>
+      <div class="band-grid">
+        <div class="band-card">
+          <div class="band-name">🎸 Joan Jett & the Blackhearts</div>
+          <div class="band-singer">🎤 Joan Jett</div>
+          <div class="band-links"><a href="https://en.wikipedia.org/wiki/Joan_Jett" target="_blank" rel="noopener">📖 info</a><a class="listen" href="https://www.youtube.com/results?search_query=Joan+Jett+Bad+Reputation" target="_blank" rel="noopener">▶ listen</a></div>
+        </div>
+        <div class="band-card">
+          <div class="band-name">🎸 The Runaways</div>
+          <div class="band-singer">🎤 Cherie Currie & Joan Jett</div>
+          <div class="band-links"><a href="https://en.wikipedia.org/wiki/The_Runaways" target="_blank" rel="noopener">📖 info</a><a class="listen" href="https://www.youtube.com/results?search_query=The+Runaways+Cherry+Bomb" target="_blank" rel="noopener">▶ listen</a></div>
+        </div>
+        <div class="band-card">
+          <div class="band-name">🎤 Blondie</div>
+          <div class="band-singer">🎤 Debbie Harry</div>
+          <div class="band-links"><a href="https://en.wikipedia.org/wiki/Blondie_(band)" target="_blank" rel="noopener">📖 info</a><a class="listen" href="https://www.youtube.com/results?search_query=Blondie+One+Way+or+Another" target="_blank" rel="noopener">▶ listen</a></div>
+        </div>
+        <div class="band-card">
+          <div class="band-name">✊ Bikini Kill</div>
+          <div class="band-singer">🎤 Kathleen Hanna</div>
+          <div class="band-links"><a href="https://en.wikipedia.org/wiki/Bikini_Kill" target="_blank" rel="noopener">📖 info</a><a class="listen" href="https://www.youtube.com/results?search_query=Bikini+Kill+Rebel+Girl" target="_blank" rel="noopener">▶ listen</a></div>
+        </div>
+        <div class="band-card">
+          <div class="band-name">💚 Paramore</div>
+          <div class="band-singer">🎤 Hayley Williams</div>
+          <div class="band-links"><a href="https://en.wikipedia.org/wiki/Paramore" target="_blank" rel="noopener">📖 info</a><a class="listen" href="https://www.youtube.com/results?search_query=Paramore+Misery+Business" target="_blank" rel="noopener">▶ listen</a></div>
+        </div>
+        <div class="band-card">
+          <div class="band-name">🎸 Sleater-Kinney</div>
+          <div class="band-singer">🎤 Corin Tucker & Carrie Brownstein</div>
+          <div class="band-links"><a href="https://en.wikipedia.org/wiki/Sleater-Kinney" target="_blank" rel="noopener">📖 info</a><a class="listen" href="https://www.youtube.com/results?search_query=Sleater-Kinney+Dig+Me+Out" target="_blank" rel="noopener">▶ listen</a></div>
+        </div>
+        <div class="band-card">
+          <div class="band-name">🎸 The Pretenders</div>
+          <div class="band-singer">🎤 Chrissie Hynde</div>
+          <div class="band-links"><a href="https://en.wikipedia.org/wiki/The_Pretenders" target="_blank" rel="noopener">📖 info</a><a class="listen" href="https://www.youtube.com/results?search_query=The+Pretenders+Brass+in+Pocket" target="_blank" rel="noopener">▶ listen</a></div>
+        </div>
+        <div class="band-card">
+          <div class="band-name">🎺 The Interrupters</div>
+          <div class="band-singer">🎤 Aimee Interrupter</div>
+          <div class="band-links"><a href="https://en.wikipedia.org/wiki/The_Interrupters" target="_blank" rel="noopener">📖 info</a><a class="listen" href="https://www.youtube.com/results?search_query=The+Interrupters+She%27s+Kerosene" target="_blank" rel="noopener">▶ listen</a></div>
+        </div>
+        <div class="band-card">
+          <div class="band-name">🔥 Amyl and the Sniffers</div>
+          <div class="band-singer">🎤 Amy Taylor</div>
+          <div class="band-links"><a href="https://en.wikipedia.org/wiki/Amyl_and_the_Sniffers" target="_blank" rel="noopener">📖 info</a><a class="listen" href="https://www.youtube.com/results?search_query=Amyl+and+the+Sniffers+Hertz" target="_blank" rel="noopener">▶ listen</a></div>
+        </div>
+        <div class="band-card">
+          <div class="band-name">🖤 Garbage</div>
+          <div class="band-singer">🎤 Shirley Manson</div>
+          <div class="band-links"><a href="https://en.wikipedia.org/wiki/Garbage_(band)" target="_blank" rel="noopener">📖 info</a><a class="listen" href="https://www.youtube.com/results?search_query=Garbage+Only+Happy+When+It+Rains" target="_blank" rel="noopener">▶ listen</a></div>
+        </div>
+        <div class="band-card">
+          <div class="band-name">⚡ X-Ray Spex</div>
+          <div class="band-singer">🎤 Poly Styrene</div>
+          <div class="band-links"><a href="https://en.wikipedia.org/wiki/X-Ray_Spex" target="_blank" rel="noopener">📖 info</a><a class="listen" href="https://www.youtube.com/results?search_query=X-Ray+Spex+Oh+Bondage+Up+Yours" target="_blank" rel="noopener">▶ listen</a></div>
+        </div>
+        <div class="band-card">
+          <div class="band-name">🎸 The Distillers</div>
+          <div class="band-singer">🎤 Brody Dalle</div>
+          <div class="band-links"><a href="https://en.wikipedia.org/wiki/The_Distillers" target="_blank" rel="noopener">📖 info</a><a class="listen" href="https://www.youtube.com/results?search_query=The+Distillers+Drain+the+Blood" target="_blank" rel="noopener">▶ listen</a></div>
+        </div>
       </div>
-      <p class="blink" style="color:#ffff33;font-size:16px">★ more coming soon ~ tell Esme ur favs! ★</p>
+      <p class="blink" style="color:#ffff33;font-size:16px">★ know another rad grrrl band? tell Esme!! ★</p>
     </div>
 
     <img class="rainbow-rule" src="/static/esme/Animated_rainbow_rule_fast_reverse.gif" alt="rainbow" />
