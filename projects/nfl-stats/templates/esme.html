@@ -119,7 +119,7 @@
     <div class="panel">
       <div class="wordart">✨🦄 Esme's Page 🦄✨</div>
       <div class="blink" style="font-size:22px;color:#ffff33">*~*~* U R visitor number *~*~*</div>
-      <div class="counter" id="hits">00013337</div>
+      <div class="counter" id="hits">{{ '%08d' % visits }}</div>
       <div style="margin-top:10px">
         <span class="uni-emoji">🦄</span><span class="uni-emoji">🌈</span>
         <span class="uni-emoji">💖</span><span class="uni-emoji">🦄</span>
@@ -276,11 +276,6 @@
   </div>
 
   <script>
-    // odometer hit counter that ticks up
-    var n = 13337;
-    setInterval(function(){
-      n++; document.getElementById('hits').textContent = ('00000000'+n).slice(-8);
-    }, 4000);
     // falling glitter
     var g = document.getElementById('glitter');
     var chars = ['✨','⭐','💖','🌈','🦄','💜'];

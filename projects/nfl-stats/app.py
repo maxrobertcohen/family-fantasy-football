@@ -33,6 +33,7 @@ from flask import (
     Flask,
     g,
     jsonify,
+    make_response,
     redirect,
     render_template,
     request,
@@ -153,6 +154,10 @@ CREATE TABLE IF NOT EXISTS guestbook (
     name    TEXT NOT NULL,
     message TEXT NOT NULL,
     created REAL NOT NULL
+);
+CREATE TABLE IF NOT EXISTS counters (
+    name  TEXT PRIMARY KEY,
+    value INTEGER NOT NULL DEFAULT 0
 );
 """
 
@@ -893,12 +898,32 @@ def stats_page():
     return render_template("stats.html", user=current_user())
 
 
+def read_counter(db, name):
+    row = db.execute("SELECT value FROM counters WHERE name=?", (name,)).fetchone()
+    return row[0] if row else 0
+
+
+def bump_counter(db, name):
+    db.execute("INSERT OR IGNORE INTO counters(name, value) VALUES (?, 0)", (name,))
+    db.execute("UPDATE counters SET value = value + 1 WHERE name=?", (name,))
+    db.commit()
+    return read_counter(db, name)
+
+
 @app.route("/esme")
 def esme_page():
-    entries = get_db().execute(
+    db = get_db()
+    entries = db.execute(
         "SELECT name, message, created FROM guestbook ORDER BY created DESC LIMIT 200"
     ).fetchall()
-    return render_template("esme.html", user=current_user(), guestbook=entries)
+    # Real visitor counter: count each browser once (via a long-lived cookie).
+    already = request.cookies.get("esme_visited")
+    visits = read_counter(db, "esme_visits") if already else bump_counter(db, "esme_visits")
+    resp = make_response(render_template(
+        "esme.html", user=current_user(), guestbook=entries, visits=visits))
+    if not already:
+        resp.set_cookie("esme_visited", "1", max_age=60 * 60 * 24 * 365, samesite="Lax")
+    return resp
 
 
 @app.route("/esme/sign", methods=["POST"])
