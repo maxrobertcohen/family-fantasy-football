@@ -96,6 +96,8 @@
     .stampede span:nth-child(3n){animation-delay:.35s}
     .stampede span:nth-child(4n){animation-delay:.55s}
     .globe{width:70px;vertical-align:middle;margin:0 8px}
+    .pukewall{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;gap:6px;margin:10px 0}
+    .pukewall img{filter:drop-shadow(0 0 5px #ff66ff)}
     h2.section{font-size:30px;margin:6px 0;-webkit-text-stroke:1px #000;
       animation:rainbowText 5s linear infinite}
     .guestlog{background:#000;color:#0f0;text-align:left;font-family:'Courier New',monospace;
@@ -153,11 +155,17 @@
         <span>🦄</span><span>🦄</span><span>🦄</span><span>🦄</span><span>🦄</span>
       </div>
 
-      <div style="margin-top:8px">
-        <img src="/static/esme/Unicorn_Pukes_Rainbow_normal_select.gif" alt="rainbow unicorn" style="width:150px" />
-        <img src="/static/esme/Unicorn.gif" alt="unicorn" style="width:150px;background:#fff;border-radius:8px" />
-        <img src="/static/esme/Unicorn_Pukes_Rainbow_normal_select.gif" alt="rainbow unicorn" style="width:150px;transform:scaleX(-1)" />
+      <h2 class="section" style="font-size:25px;margin-top:10px">🌈🤮🦄 RAINBOW PUKE PARTY 🦄🤮🌈</h2>
+      <p style="font-size:17px">so many puking unicorns!!! 🌈🌈🌈</p>
+      <div class="pukewall">
+        {% for i in range(60) %}
+        <img src="/static/esme/Unicorn_Pukes_Rainbow_normal_select.gif" alt="rainbow unicorn"
+             style="width:{{ 60 + (i % 5) * 16 }}px;{{ 'transform:scaleX(-1);' if i % 2 else '' }}" />
+        {% endfor %}
       </div>
+      <marquee scrollamount="14" style="color:#ff66ff">
+        🤮🌈 BLEEEEEH RAINBOWS 4 EVERYONE 🌈🤮 🦄🦄🦄🦄🦄🦄🦄🦄🦄🦄
+      </marquee>
 
       <marquee scrollamount="9" style="color:#00ffcc;margin-top:6px">
         🦄 unicorns r the best animal EVER and no1 can tell me different 🦄 rainbows 4 lyfe 🌈
