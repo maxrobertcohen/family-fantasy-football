@@ -103,6 +103,8 @@
     .puke-inline{width:46px;vertical-align:middle;margin:0 4px;filter:drop-shadow(0 0 4px #ff66ff)}
     .flying-puke{position:fixed;z-index:8;pointer-events:none;width:58px;
       filter:drop-shadow(0 0 6px #ff66ff);animation:shoot linear forwards}
+    .puke-rain{position:fixed;top:-14vh;z-index:6;pointer-events:none;
+      filter:drop-shadow(0 0 5px #ff66ff);animation:fall linear infinite}
     h2.section{font-size:30px;margin:6px 0;-webkit-text-stroke:1px #000;
       animation:rainbowText 5s linear infinite}
     .guestlog{background:#000;color:#0f0;text-align:left;font-family:'Courier New',monospace;
@@ -320,6 +322,20 @@
       s.style.animationDuration = (4+(i%6))+'s';
       s.style.animationDelay = (-(i%8))+'s';
       g.appendChild(s);
+    }
+
+    // 🌧️🦄 puking rainbow unicorns raining down from the top forever 🦄🌧️
+    for (var j=0; j<22; j++){
+      var pu = document.createElement('img');
+      pu.className = 'puke-rain';
+      pu.src = '/static/esme/Unicorn_Pukes_Rainbow_normal_select.gif';
+      pu.alt = '';
+      pu.style.left = (Math.random()*98) + '%';
+      pu.style.width = (34 + Math.random()*40) + 'px';
+      pu.style.animationDuration = (5 + Math.random()*7) + 's';
+      pu.style.animationDelay = (-(Math.random()*10)) + 's';
+      if (Math.random() < 0.5) pu.style.transform = 'scaleX(-1)';
+      g.appendChild(pu);
     }
 
     // ⭐ shooting stars that streak across at random, unpredictable intervals ⭐
